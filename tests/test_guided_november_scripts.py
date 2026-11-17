@@ -30,11 +30,11 @@ def submit(current, *values):
     return current
 
 
-def test_scope_and_source_are_november_9():
-    assert [d['number'] for d in DEFENSES.values()] == [1, 2, 5, 8, *range(9, 22)]
-    assert not {'standing_privity', 'failure_to_state_cause', 'wrong_party', 'identity_theft'} & DEFENSES.keys()
-    assert '2026.11.10' in CONTENT['source']
-    assert 'may still need to prove when you last paid' in CONTENT['nodes']['statute_of_limitations_intro']['explanation']
+def test_scope_and_source_are_november_14():
+    assert [d['number'] for d in DEFENSES.values()] == list(range(1,22))
+    assert {'standing_privity', 'failure_to_state_cause', 'wrong_party', 'identity_theft'} <= DEFENSES.keys()
+    assert '2026.11.14' in CONTENT['source']
+    assert 'Consider raising this defense' in CONTENT['nodes']['statute_of_limitations_intro']['explanation']
     assert 'Ambiguity means something is unclear' in CONTENT['nodes']['ambiguity_intro']['explanation']
     assert 'Laches may apply if:' in CONTENT['nodes']['laches_intro']['explanation']
 
@@ -58,8 +58,6 @@ def test_common_counts_broad_first_offer_and_parent_derive_from_choices(selected
     assert current.current == 'common_counts_first_checkbox'
     assert 'miscalculate' in ' '.join(current.page()['body'])
     current = submit(current, selected, 'no', 'no')
-    assert current.current == 'guided_common_counts_parent'
-    current = submit(current, 'continue')
     assert current.current == DEFENSES['common_counts']['summary']
     choices = current.session.checkbox_selections['common_counts']
     assert choices == {'first': 'include' if selected == 'yes' else 'exclude',
@@ -77,8 +75,6 @@ def test_excuse_offers_second_and_fifth_without_factual_screening():
     assert current.current == 'excuse_fifth_checkbox'
     assert 'good faith and fair dealing' in ' '.join(current.page()['body'])
     current = submit(current, 'yes')
-    assert current.current == 'guided_excuse_breach_parent'
-    current = submit(current, 'continue')
     assert current.current == DEFENSES['excuse_breach']['summary']
     assert current.session.checkbox_selections['excuse_breach'] == {'second': 'exclude', 'fifth': 'include', 'main': 'include'}
 
@@ -90,8 +86,6 @@ def test_fraud_fact_alone_does_not_offer_common_counts_fifth():
     while current.current != DEFENSES['common_counts']['intro']:
         current = submit(current, default_answer(current))
     current = submit(current, 'continue', 'no', 'no', 'no')
-    assert current.current == 'guided_common_counts_parent'
-    current = submit(current, 'continue')
     assert current.current == DEFENSES['common_counts']['summary']
     assert 'fifth' not in current.session.checkbox_selections['common_counts']
 
@@ -197,19 +191,17 @@ def test_full_affirmative_path_exceeds_old_history_limit_and_final_review_has_ev
     assert len(current.history) > 80
     assert seen == set(DEFENSES)
     assert GuidedRequest(history=current.history).history == current.history
-    assert len(current.page()['groups']) == 17
+    assert len(current.page()['groups']) == 21
     assert all(g['rows'] for g in current.page()['groups'])
     assert not current.page()['open_questions']
-    assert not any(TREE.node(a.node_id).discussion_topic in {'Identity Theft','Wrong Party','Standing and Privity','Failure to State a Cause of Action'} for a in current.history if a.node_id in TREE.node_map)
+    assert {'identity_theft','wrong_party','standing_privity','failure_to_state_cause'} <= seen
 
 
 def test_editing_excuse_fact_removes_invalid_nested_choice_but_keeps_broad_choices():
-    current = submit(reach('excuse_breach'), 'yes', 'yes', 'yes', 'no', 'no', 'no', 'continue')
+    current = submit(reach('excuse_breach'), 'yes', 'yes', 'yes', 'no', 'no', 'no')
     assert current.current == DEFENSES['excuse_breach']['summary']
     index = next(i for i,a in enumerate(current.history) if a.node_id == 'excuse_unconsented_change')
     updated = edit_review({}, GuidedEditRequest(history=current.history, edit_index=index, value='no'))
-    if updated.current == 'guided_excuse_breach_parent':
-        updated = submit(updated, 'continue')
     assert updated.current == DEFENSES['excuse_breach']['summary']
     assert updated.session.checkbox_selections['excuse_breach'] == {'second':'include','fifth':'exclude','main':'include'}
 
@@ -257,7 +249,7 @@ def test_later_sections_reuse_consolidation_resolved_in_mitigation(defense):
 
 
 def test_unrelated_edit_retains_explicitly_uncertain_mitigation_contact():
-    current = submit(reach('failure_to_mitigate'), 'no', 'continue', 'unknown', 'continue', 'unknown', 'no', 'continue')
+    current = submit(reach('failure_to_mitigate'), 'no', 'continue', 'unknown', 'continue', 'unknown', 'no')
     assert current.current == DEFENSES['failure_to_mitigate']['summary']
     index = next(i for i,a in enumerate(current.history) if a.node_id == 'guided_plaintiff')
     current = edit_review({}, GuidedEditRequest(history=current.history, edit_index=index, value='Renamed Bank'))

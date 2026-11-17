@@ -1,7 +1,7 @@
 'use strict';
 const $ = (id) => document.getElementById(id);
 const debugMode = document.body?.dataset?.debugMode === 'true';
-const storageKey = 'debt-case-guide:guided-defenses:2026-11-10:nested-labels-v1' + (debugMode ? ':debug' : '');
+const storageKey = 'debt-case-guide:guided-defenses:2026-11-14:all-21-shared-identity-wrong-party-2026-11-15-v4' + (debugMode ? ':debug' : '');
 let debugSection = null;
 let history = [], cursor = 0, page = null, revision = null, editMode = false, busy = false, chatBusy = false, chatKey = '', chatController = null;
 const drafts = new Map(), conversations = new Map();
@@ -57,7 +57,7 @@ async function load(nextHistory = history, nextCursor = cursor, focus = true) {
 function selectedValue() {
   if (!page) return '';
   if (['continue','summary','preliminary_summary'].includes(page.input_type)) return 'continue';
-  if (['text','currency'].includes(page.input_type)) return $('text-unknown')?.checked ? 'unknown' : $('text-answer')?.value.trim() || '';
+  if (['text','currency'].includes(page.input_type)) return $('text-missing')?.checked ? 'missing' : $('text-unknown')?.checked ? 'unknown' : $('text-answer')?.value.trim() || '';
   const chosen = document.querySelector('input[name="answer"]:checked')?.value || '';
   return chosen === 'date' ? $('date-answer')?.value || '' : chosen;
 }
@@ -133,15 +133,21 @@ function inputControls() {
   const selected=draft ?? saved ?? page.default_value ?? '';
   if (['text','currency'].includes(page.input_type)) {
     const label=element('label','field-label',page.field_label || 'Short answer'); label.htmlFor='text-answer';
-    const input=element('input','text-input'); input.id='text-answer'; input.type=page.input_type==='currency'?'number':'text'; input.maxLength=300; input.value=page.allow_unknown && selected==='unknown' ? '' : selected; input.autocomplete='off'; input.required=true;
+    const input=element('input','text-input'); input.id='text-answer'; input.type=page.input_type==='currency'?'number':'text'; input.maxLength=300; input.value=(page.allow_unknown && selected==='unknown') || (page.allow_text_missing && selected==='missing') ? '' : selected; input.autocomplete='off'; input.required=true;
     if (page.input_type==='currency') {input.min='0.01';input.step='0.01';input.inputMode='decimal';}
     input.addEventListener('input', updateNext); control.append(label,input,element('p','input-hint',page.allow_unknown ? 'Short answer' : 'Short answer · You can edit the prefilled example.'));
     if (page.allow_unknown) {
       const unknownLabel=element('label','choice');
       const unknown=element('input'); unknown.type='checkbox'; unknown.id='text-unknown'; unknown.checked=selected==='unknown';
-      input.disabled=unknown.checked;
-      unknown.addEventListener('change',()=>{ input.disabled=unknown.checked; updateNext(); });
+      input.disabled=unknown.checked || (page.allow_text_missing && selected==='missing');
+      unknown.addEventListener('change',()=>{ if(unknown.checked && $('text-missing')) $('text-missing').checked=false; input.disabled=unknown.checked || !!$('text-missing')?.checked; updateNext(); });
       unknownLabel.append(unknown,element('span','choice-title','I’m not sure')); control.append(unknownLabel);
+    }
+    if(page.allow_text_missing) {
+      const missingLabel=element('label','choice');
+      const missing=element('input');missing.type='checkbox';missing.id='text-missing';missing.checked=selected==='missing';
+      missing.addEventListener('change',()=>{if(missing.checked && $('text-unknown'))$('text-unknown').checked=false;input.disabled=missing.checked || !!$('text-unknown')?.checked;updateNext();});
+      missingLabel.append(missing,element('span','choice-title','Not listed in the complaint'));control.append(missingLabel);
     }
   } else if (page.input_type==='choice') {
     const fieldset=element('fieldset','choice-list'); fieldset.append(element('legend','',page.question_text || page.title));
@@ -163,9 +169,10 @@ function inputControls() {
   } else if (page.input_type==='summary' || page.input_type==='complete') {
     if(page.input_type==='complete') {
       $('visual').append(element('div','complete-icon','✓'));
-      control.append(element('p','completion-note','You’ve finished the 17 defenses in this prototype. You can go back or use Change to review your selections.'));
+      control.append(element('p','completion-note','You’ve finished the 21 defenses in this prototype. You can go back or use Change to review your selections.'));
     }
     for (const group of page.groups || [{section:page.section,rows:page.rows}]) control.append(summaryTable(group));
+    if(page.confirmation_reminder) control.append(element('p','completion-note',page.confirmation_reminder));
     control.append(answerReview());
   }
 }
@@ -181,7 +188,7 @@ function renderVisual() {
     timeline.append(labels,track); container.append(timeline);
   } else if(visual.type==='overview') {
     const overview=element('div','overview-visual');
-    [['Verify case details','Review your complaint and account details once.'],['Review the defenses','Review 17 defenses in Attachment 4 order.'],['Complete Attachment 4','Fill out the form using the choices recorded here.']].forEach(([title,body],i)=>{ const card=element('div','overview-step');card.append(element('span','',String(i+1)),element('strong','',title),element('p','',body));overview.append(card); });
+    [['Verify case details','Review your complaint and account details once.'],['Review the defenses','Review 21 defenses in Attachment 4 order.'],['Complete Attachment 4','Fill out the form using the choices recorded here.']].forEach(([title,body],i)=>{ const card=element('div','overview-step');card.append(element('span','',String(i+1)),element('strong','',title),element('p','',body));overview.append(card); });
     container.append(overview);
   }
 }
@@ -194,7 +201,9 @@ function summaryTable(group) {
     const row=element('div','selection-row'); const mark=element('span',`selection-mark${item.checked?' checked':''}`,item.checked?'✓':'');mark.setAttribute('aria-hidden','true');
     const content=element('div','selection-main');content.append(element('strong','',item.label),element('small','',item.detail),element('span',`selection-status${item.checked?' selected':''}`,item.status));row.append(mark,content);
     if(item.previous_status) content.append(element('small','selection-change',`Previously: ${item.previous_status}`));
-    if(item.edit_index!==null) row.append(editButton(item.edit_index,item.label)); table.append(row);
+    if(item.write_in_reasons?.length) content.append(detailsRows(item.write_in_reasons));
+    if(item.choice_reasons?.length) content.append(detailsRows(item.choice_reasons));
+    if(item.edit_index!==null && !item.write_in_reasons?.length) row.append(editButton(item.edit_index,item.label)); table.append(row);
   }
   return table;
 }
@@ -216,7 +225,9 @@ function render(focus=true) {
   $('eyebrow').textContent=page.section.toUpperCase();
   $('section-name').textContent=page.section;
   $('section-count').textContent=`${String(page.section_number).padStart(2,'0')} / ${String(page.section_count).padStart(2,'0')}`;
-  $('body').replaceChildren(...scriptNodes(page.body,page.body_blocks));
+  $('body').replaceChildren(...scriptNodes(
+    page.body.filter(text=>text!==page.confirmation_reminder),
+    (page.body_blocks||[]).filter(block=>block.text!==page.confirmation_reminder)));
   $('revision-notice').textContent=page.revision_notice||'';
   $('revision-notice').hidden=!page.revision_notice;
   $('why').textContent=friendly(page.why);$('aside-title').textContent=page.stage===2?'Your choices, in one place':'Why we ask';

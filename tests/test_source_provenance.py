@@ -18,8 +18,10 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_v3_is_the_current_source_and_matches_the_download():
     source = ROOT / CONTENT['source']
-    assert source.name == '2026.11.10 Affirmative-Defense-Scripts.docx'
-    assert CONTENT['sol_source'] == CONTENT['source'] == SOURCE_FORMATTING['source']
+    assert source.name == '2026.11.14 Affirmative-Defense-Scripts.docx'
+    assert CONTENT['source'] == SOURCE_FORMATTING['source']
+    assert CONTENT['sol_source'] == SOURCE_FORMATTING['sol_source']
+    assert '2026.11.15' in CONTENT['sol_source']
     assert hashlib.sha256(source.read_bytes()).hexdigest() == SOURCE_FORMATTING['source_sha256']
     module = runpy.run_path(str(ROOT / 'scripts/extract_script_formatting.py'))
     assert module['extract_prototype_formatting']() == SOURCE_FORMATTING
@@ -38,13 +40,13 @@ def test_written_contract_information_is_a_required_separate_screen(creditor, ch
     current = advance_updated(current, choice)
     assert current.current == 'sol_written'
     page = current.page()
-    assert page['title'] == 'The second indented Statute of Limitations checkbox'
-    assert page['input_type'] == 'continue'
-    assert len(page['body_blocks']) == 2
-    assert page['body_blocks'][0]['text'].startswith('You previously indicated your contract')
-    assert page['body_blocks'][1]['text'] == 'The defense under the second indented checkbox does not apply.'
+    assert page['title'] == 'Statute of Limitations defense for oral contracts'
+    assert page['input_type'] == 'choice'
+    assert len(page['body_blocks']) == 4
+    assert page['body_blocks'][0]['text'].startswith('The “Statute of Limitations” defense for oral contracts does not apply')
+    assert page['body_blocks'][1]['text'].startswith('You said your contract')
     assert 'Based on your answers' not in ' '.join(page['body'])
-    current = advance_updated(current, 'continue')
+    current = advance_updated(current, 'no')
     assert current.current == SUMMARY
     assert 'Based on your answers' in ' '.join(current.page()['body'])
 
@@ -57,8 +59,8 @@ def test_v3_oral_contract_guidance_keeps_all_three_paragraphs():
     blocks = current.page()['body_blocks']
     assert len(blocks) == 3
     assert blocks[0]['text'] == 'Oral contracts have shorter statute of limitations.'
-    assert blocks[1]['text'].startswith('You’ve indicated your contract with Original Example Bank was oral.')
-    assert blocks[2]['text'].startswith('People in this situation often check off')
+    assert blocks[1]['text'].startswith('You said your contract with Original Example Bank was oral.')
+    assert blocks[2]['text'].startswith('People in this situation often raise this defense specifically for oral contracts')
 
 
 def test_v3_payment_question_names_the_plaintiff_and_fixes_the_main_guidance():

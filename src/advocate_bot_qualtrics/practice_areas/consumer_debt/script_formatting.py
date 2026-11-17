@@ -19,6 +19,8 @@ def normalized(text: str) -> str:
 STATIC = {}
 DYNAMIC = {}
 for paragraph in SOURCE_FORMATTING['paragraphs']:
+    if paragraph.get('internal'):
+        continue
     text = paragraph['text']
     tokens = tuple(dict.fromkeys(re.findall(r'\[[^\]]+\]',text)))
     if tokens:

@@ -57,7 +57,7 @@ CORRECTION_FIELDS = {
     "prelim_correct_payment": ("LAST-PAYMENT-DATE", "last_payment_complaint"),
     "prelim_correct_open_date": ("OPEN-DATE", "open_date"),
 }
-COMPLAINT_FIELDS = {"AMOUNT", "LAST-PAYMENT-DATE", "OPEN-DATE"}
+COMPLAINT_FIELDS = {"AMOUNT", "LAST-PAYMENT-DATE", "OPEN-DATE", "ORIGINAL.CREDITOR"}
 
 # Temporary scraper contract: document tags outside, established session tags inside.
 PARSED_FIELDS = {

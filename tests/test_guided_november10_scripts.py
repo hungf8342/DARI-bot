@@ -9,15 +9,18 @@ from test_guided_november9_screens import begin, start, step
 
 
 @pytest.mark.parametrize('defense', DEFENSES)
-def test_summary_rows_use_source_descriptors_without_ordinal_labels(defense):
+def test_summary_rows_use_source_descriptors_with_ordinal_labels(defense):
     current = start(defense)
     rows = current._rows(defense)
-    assert rows[0]['label'] == DEFENSES[defense]['label']
+    assert rows[0]['label'] == CONTENT['main_checkbox_names'].get(defense,DEFENSES[defense]['label'])
     source = '\n'.join(p['text'] for p in SOURCE_FORMATTING['paragraphs']).casefold()
     expected = CONTENT['summary_labels'].get(defense, {})
     for row in rows[1:]:
-        assert row['label'] == expected[row['id']]
-        assert row['label'].casefold() in source
+        ordinal=CONTENT['checkbox_ordinals'].get(defense,{}).get(row['id'])
+        label=expected[row['id']]
+        assert row['label'] == (f'({ordinal}) '+label if ordinal else label)
+        if defense not in {'standing_privity','failure_to_state_cause','identity_theft','wrong_party'}:
+            assert label.casefold() in source
         assert row['detail'] == 'Nested checkbox'
         assert row['status'] == 'Not offered on this path'
 
@@ -42,12 +45,12 @@ def test_uncertain_settlement_returns_to_first_question_before_any_contact(conso
 @pytest.mark.parametrize('consolidation', ['yes', 'no'])
 def test_mitigation_edit_reconciles_both_nested_choices_in_the_new_order(consolidation):
     current = begin('failure_to_mitigate', consolidation=consolidation)
-    for value in ['yes', 'yes', 'no', 'yes', 'continue']:
+    for value in ['yes', 'yes', 'no', 'yes']:
         current = step(current, value)
     assert current.current == DEFENSES['failure_to_mitigate']['summary']
     rows = current.page()['rows']
     assert [r['label'] for r in rows[1:]] == [
-        'Settlement offer declined before suit', 'Attempted collection or settlement before suit']
+        '(1) Settlement offer declined before suit', '(2) Attempted collection or settlement before suit']
     assert all(r['checked'] for r in rows)
     index = next(i for i, a in enumerate(current.history) if a.node_id == 'mitigation_settlement')
     current = edit_review(current.defaults, GuidedEditRequest(

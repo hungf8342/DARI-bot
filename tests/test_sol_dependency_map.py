@@ -1,117 +1,103 @@
-"""The approved SOL map traces checkbox offers backward to required facts."""
+"""SOL dependencies preserve explicit main inclusion before nested choices."""
 from itertools import product
-
 import pytest
 
 from advocate_bot_qualtrics.practice_areas.consumer_debt.sol_dependency_map import (
     affected_checkboxes, load_dependency_map, plan_checkbox_review,
 )
-from advocate_bot_qualtrics.practice_areas.consumer_debt.base_tree import BASE_TREE_DEFINITION as TREE
+from advocate_bot_qualtrics.practice_areas.consumer_debt.workflow import TREE
 
-QUESTIONS = {'plaintiff_type': 'sol_creditor_type_resolve', 'payment_timing': 'sol_payment_age', 'oral_agreement': 'sol_oral_gate_resolve'}
-
-
-def plan(creditor, timing, oral, choices=None):
-    return plan_checkbox_review({'plaintiff_type': creditor, 'payment_timing': timing, 'oral_agreement': oral}, QUESTIONS, choices or {})
+QUESTIONS={'plaintiff_type':'sol_creditor_type_resolve','payment_timing':'sol_payment_age','oral_agreement':'sol_oral_gate_resolve'}
 
 
-@pytest.mark.parametrize('timing', [None, 'qualifying', 'recent', 'uncertain'])
-def test_debt_buyers_always_offer_main_and_group_without_any_timing_fact(timing):
-    result = plan('buyer', timing, 'no')
-    assert result.availability == {'main': True, 'first': True, 'third': True, 'second': False}
-    assert result.required_questions == ['statute_of_limitations_decision', 'sol_checkboxes_first_third']
+def plan(creditor,timing,oral,choices=None):
+    return plan_checkbox_review({'plaintiff_type':creditor,'payment_timing':timing,'oral_agreement':oral},QUESTIONS,choices or {})
 
 
-def test_unknown_plaintiff_type_is_resolved_before_requesting_other_facts():
-    result = plan(None, None, None)
-    assert all(value is None for value in result.availability.values())
-    assert result.required_questions == ['sol_creditor_type_resolve']
+@pytest.mark.parametrize('timing',[None,'qualifying','recent','uncertain'])
+def test_debt_buyer_needs_no_timing_before_main_choice(timing):
+    result=plan('buyer',timing,None)
+    assert result.availability=={'main':True,'first':None,'third':None,'second':None}
+    assert result.required_questions==['statute_of_limitations_decision']
+    assert result.used_facts==['plaintiff_type']
 
 
-def test_recent_original_creditor_path_does_not_need_oral_fact_or_any_choices():
-    result = plan('original', 'recent', None)
-    assert not any(result.availability.values())
-    assert result.required_questions == []
+def test_unknown_creditor_is_resolved_before_any_selection():
+    result=plan(None,None,None)
+    assert all(v is None for v in result.availability.values())
+    assert result.required_questions==['sol_creditor_type_resolve']
 
 
-@pytest.mark.parametrize('creditor,timing,oral,expected', [
-    ('buyer', None, 'yes', ['plaintiff_type', 'oral_agreement']),
-    ('buyer', 'recent', 'no', ['plaintiff_type', 'oral_agreement']),
-    ('original', 'recent', None, ['plaintiff_type', 'payment_timing']),
-    ('original', 'qualifying', 'yes', ['plaintiff_type', 'payment_timing', 'oral_agreement']),
-    ('original', 'uncertain', 'no', ['plaintiff_type', 'payment_timing', 'oral_agreement']),
-])
-def test_active_dependencies_exclude_facts_not_used_by_the_current_path(creditor, timing, oral, expected):
-    assert plan(creditor, timing, oral).used_facts == expected
+@pytest.mark.parametrize('timing',['qualifying','recent','uncertain'])
+def test_each_original_creditor_result_offers_main_but_does_not_infer_inclusion(timing):
+    result=plan('original',timing,None)
+    assert result.availability=={'main':True,'first':None,'third':None,'second':None}
+    assert result.required_questions==['statute_of_limitations_decision']
+    assert result.used_facts==['plaintiff_type','payment_timing']
 
 
-@pytest.mark.parametrize('timing', ['qualifying', 'uncertain'])
-def test_preserved_original_creditor_path_requires_explicit_choices(timing):
-    result = plan('original', timing, 'yes')
+@pytest.mark.parametrize('oral',['yes','no',None])
+def test_declining_main_skips_nested_and_oral_questions(oral):
+    result=plan('buyer',None,oral,{'main':'no'})
+    assert result.availability=={'main':True,'first':False,'third':False,'second':False}
+    assert result.required_questions==[]
+    assert 'oral_agreement' not in result.used_facts
+
+
+@pytest.mark.parametrize('oral,node',[('yes','sol_checkbox_second'),('no','sol_written')])
+def test_both_contract_types_need_a_second_reason_choice_after_main_inclusion(oral,node):
+    result=plan('buyer',None,oral,{'main':'yes'})
     assert all(result.availability.values())
-    assert result.required_questions == ['statute_of_limitations_decision', 'sol_checkboxes_first_third', 'sol_checkbox_second']
+    assert result.required_questions==['sol_checkboxes_first_third',node]
 
 
-def test_declining_main_does_not_remove_indented_choices():
-    result = plan('buyer', None, 'yes', {'main': 'no'})
-    assert result.required_questions == ['sol_checkboxes_first_third', 'sol_checkbox_second']
-    assert all(result.availability.values())
+def test_unknown_contract_type_is_requested_only_after_main_inclusion():
+    result=plan('buyer',None,None,{'main':'yes','first':'no','third':'no'})
+    assert result.required_questions==['sol_oral_gate_resolve']
+    assert result.availability['second'] is None
 
 
-def test_existing_choices_do_not_resolve_a_missing_required_fact():
-    result = plan('original', None, 'yes', {'main': 'yes', 'first': 'yes', 'third': 'yes', 'second': 'yes'})
-    assert result.required_questions == ['sol_payment_age']
+def test_saved_choices_do_not_override_unknown_original_creditor_timing():
+    result=plan('original',None,'yes',{'main':'yes','first':'yes','third':'yes','second':'yes'})
+    assert result.required_questions==['sol_payment_age']
     assert all(value is None for value in result.availability.values())
 
 
-@pytest.mark.parametrize('field,expected', [
-    ('guided_plaintiff', set()), ('guided_original_creditor', set()),
-    ('guided_oral', {'second'}),
-    ('guided_creditor_type', {'main', 'first', 'third', 'second'}),
-    ('guided_payment_date', {'main', 'first', 'third', 'second'}),
-    ('guided_filing_date', {'main', 'first', 'third', 'second'}),
-    ('statute_of_limitations_decision', {'main'}),
-    ('sol_checkboxes_first_third', {'first', 'third'}),
+@pytest.mark.parametrize('field,expected',[
+ ('guided_plaintiff',set()),('guided_original_creditor',set()),
+ ('guided_oral',{'second'}),('guided_creditor_type',{'main','first','third','second'}),
+ ('guided_payment_date',{'main','first','third','second'}),('guided_filing_date',{'main','first','third','second'}),
+ ('statute_of_limitations_decision',{'main','first','third','second'}),
+ ('sol_checkboxes_first_third',{'first','third'}),('sol_written',{'second'}),
 ])
-def test_backward_edges_identify_exactly_which_boxes_a_field_can_affect(field, expected):
-    assert set(affected_checkboxes(field)) == expected
+def test_backward_edges_include_main_selection_and_both_oral_choice_screens(field,expected):
+    assert set(affected_checkboxes(field))==expected
 
 
-def test_map_points_to_existing_questions_for_the_exact_checkbox_ids():
-    data = load_dependency_map()
-    for box, spec in data['checkboxes'].items():
-        assert box in {b.checkbox_id for b in TREE.node(spec['question']).selection_checkboxes}
+def test_dependency_questions_match_current_checkbox_metadata():
+    data=load_dependency_map()
+    for box,spec in data['checkboxes'].items():
+        for question in [spec['question'],*spec.get('alternate_questions',[])]:
+            assert box in {b.checkbox_id for b in TREE.node(question).selection_checkboxes}
     for fact in data['facts'].values():
-        for question in fact['questions']:
-            assert TREE.node(question).kind == 'choice'
+        for question in fact['questions']:assert TREE.node(question).kind=='choice'
 
 
-@pytest.mark.parametrize('creditor,timing,oral', list(product(['original', 'buyer'], ['qualifying', 'recent', 'uncertain'], ['yes', 'no'])))
-def test_map_offers_match_actual_clickthrough_traversal(creditor, timing, oral):
-    from advocate_bot_qualtrics.practice_areas.consumer_debt.workflow import (
-        CONTINUE_PAGES, SUMMARY, TREE as GUIDED_TREE,
-    )
-    from test_clickthrough_workflow import intake, review, answers
-
-    history = intake(creditor, payment='missing', oral=oral)
-    current = review(history)
-    offered = set()
+@pytest.mark.parametrize('creditor,timing,oral,main',list(product(['original','buyer'],['qualifying','recent','uncertain'],['yes','no'],['yes','no'])))
+def test_planner_and_actual_traversal_agree_on_offered_boxes(creditor,timing,oral,main):
+    from test_clickthrough_workflow import intake,review,answers
+    from advocate_bot_qualtrics.practice_areas.consumer_debt.workflow import SUMMARY
+    history=intake(creditor,payment='missing',oral=oral)
+    current=review(history);offered=set()
     for _ in range(20):
-        if current.current == SUMMARY:
-            break
-        node = GUIDED_TREE.node(current.current)
+        if current.current==SUMMARY:break
+        node=TREE.node(current.current)
         if node.selection_checkboxes:
-            offered.update(box.checkbox_id for box in node.selection_checkboxes)
-            branch = 'no'
-        elif node.id in CONTINUE_PAGES:
-            branch = 'continue'
-        elif node.id == 'sol_payment_age':
-            branch = {'qualifying': 'no', 'recent': 'yes', 'uncertain': 'unknown'}[timing]
-        else:
-            pytest.fail(f'Unexpected question {node.id}')
-        history += answers((node.id, branch))
-        current = review(history)
-    else:
-        pytest.fail('The SOL section did not finish')
-    expected = plan(creditor, timing, oral)
-    assert offered == {box for box, eligible in expected.availability.items() if eligible}
+            offered.update(b.checkbox_id for b in node.selection_checkboxes)
+            value=main if node.id=='statute_of_limitations_decision' else 'no'
+        elif node.id=='sol_payment_age':value={'qualifying':'no','recent':'yes','uncertain':'unknown'}[timing]
+        else:pytest.fail(node.id)
+        history+=answers((node.id,value));current=review(history)
+    else:pytest.fail('SOL failed to reach review')
+    expected=plan(creditor,timing,oral,{'main':main})
+    assert offered=={box for box,available in expected.availability.items() if available}

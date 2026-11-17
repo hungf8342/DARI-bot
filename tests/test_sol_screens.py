@@ -28,7 +28,7 @@ def test_source_footnotes_supply_the_sol_screen_headings():
         current = advance_updated(current, value)
     assert 'NEW SCREEN: ' + current.page()['title'] in headings
     agreement = review(intake())
-    assert 'NEW SCREEN: ' + agreement.page()['title'] in headings
+    assert 'NEW SCREEN: ' + agreement.page()['title'].replace('2024-03-15','[LAST.PAYMENT.DATE]') in headings
     assert agreement.page()['body'][0].startswith('The complaint lists your last payment')
 
 
@@ -46,26 +46,27 @@ def test_after_cutoff_answers_and_calendar_dates(filing, cutoff, answer, offered
     assert ack in feedback and cutoff in feedback
     assert current.__dict__ == before
     following = advance_updated(current, answer)
-    assert following.current == ('statute_of_limitations_decision' if offered else SUMMARY)
+    assert following.current == 'statute_of_limitations_decision'
     if offered:
-        assert 'Consider raising this defense if your last payment was a year or more' in ' '.join(following.page()['body'])
+        assert 'This defense may apply if your last payment was a year or more' in ' '.join(following.page()['body'])
     else:
-        assert 'This defense does not apply' in feedback
+        assert 'This defense does not apply' in ' '.join(following.page()['body'])
         assert not following.session.checkbox_selections
-        assert CONTENT['confirmation']['empty'] in following.page()['body']
+        assert 'often skip this defense' in ' '.join(following.page()['body'])
     assert not following.session.defense_open_questions
 
 
 @pytest.mark.parametrize('payment,offered', [('2025-09-20', True), ('2025-09-21', False)])
 def test_agreed_payment_on_cutoff_is_qualifying(payment, offered):
     current = advance_updated(review(intake(payment=payment)), 'yes')
-    assert current.current == ('statute_of_limitations_decision' if offered else SUMMARY)
+    assert current.current == 'statute_of_limitations_decision'
+    assert ('often raise this defense' in ' '.join(current.page()['body'])) == offered
 
 
 @pytest.mark.parametrize('choices,pending', [
     ([], 'statute_of_limitations_decision'),
-    (['no'], 'sol_checkboxes_first_third'),
-    (['no', 'yes'], 'sol_checkbox_second'),
+    (['yes'], 'sol_checkboxes_first_third'),
+    (['yes', 'yes'], 'sol_checkbox_second'),
 ])
 def test_shared_uncertainty_screen_next_returns_to_same_question(choices, pending):
     current = review(intake('buyer', oral='yes'))
@@ -121,16 +122,17 @@ def test_missing_filing_date_never_displays_an_unknown_cutoff():
     assert current.page()['title'] == 'Was your last payment after 2023-02-28?'
 
 
-def test_editing_after_cutoff_answer_removes_old_boxes_and_reopens_when_changed_back():
-    history = intake(payment='missing') + answers(
-        ('sol_payment_age', 'no'), ('statute_of_limitations_decision', 'yes'), ('sol_checkboxes_first_third', 'yes'), ('sol_written', 'continue'))
-    updated = change(history, 'sol_payment_age', 'yes')
-    assert updated.current == SUMMARY
-    assert not updated.session.checkbox_selections.get(DEFENSE)
-    assert all(not row['checked'] for row in updated.page()['rows'])
-    reopened = change(updated.history, 'sol_payment_age', 'no', revision=updated.revision)
-    assert reopened.current == 'statute_of_limitations_decision'
-    assert not reopened.session.checkbox_selections.get(DEFENSE)
+def test_editing_timing_reopens_main_and_declining_it_removes_old_nested_choices():
+    history=intake(payment='missing')+answers(('sol_payment_age','no'),('statute_of_limitations_decision','yes'),('sol_checkboxes_first_third','yes'),('sol_written','no'))
+    updated=change(history,'sol_payment_age','yes')
+    assert updated.current=='statute_of_limitations_decision'
+    assert not updated.session.checkbox_selections
+    updated=advance_updated(updated,'no')
+    assert updated.current==SUMMARY
+    assert updated.session.checkbox_selections[DEFENSE]=={'main':'exclude'}
+    reopened=change(updated.history,'sol_payment_age','no',revision=updated.revision)
+    assert reopened.current=='statute_of_limitations_decision'
+    assert not reopened.session.checkbox_selections
 
 
 def test_debug_api_uses_v2_cutoff_and_shared_return_without_collecting(tmp_path):
@@ -141,7 +143,7 @@ def test_debug_api_uses_v2_cutoff_and_shared_return_without_collecting(tmp_path)
     assert state['title'] == 'Was your last payment after 2025-09-20?'
     result = client.post('/api/advance', json={'history': [a.model_dump() for a in history], 'value': 'no'})
     assert result.status_code == 200
-    assert result.json()['page']['title'] == 'Do you want to check off the Statute of Limitations checkbox?'
+    assert result.json()['page']['title'] == 'Do you want to raise a Statute of Limitations defense?'
     uncertain = client.post('/api/advance', json={'history': result.json()['history'], 'value': 'unknown'})
     assert uncertain.status_code == 200
     assert uncertain.json()['page']['input_type'] == 'continue'
@@ -153,22 +155,20 @@ def test_debug_api_uses_v2_cutoff_and_shared_return_without_collecting(tmp_path)
 
 @pytest.mark.parametrize('previous_choice', ['yes', 'no'])
 @pytest.mark.parametrize('timing', ['no', 'unknown'])
-def test_revising_personal_timing_shows_main_choice_before_nested_choices(previous_choice, timing):
-    history = intake(payment='missing') + answers(
-        ('sol_payment_age', 'no'), ('statute_of_limitations_decision', previous_choice),
-        ('sol_checkboxes_first_third', 'yes'), ('sol_written', 'continue'))
-    current = change(history, 'sol_payment_age', timing)
-    assert current.current == 'statute_of_limitations_decision'
-    page = current.page()
-    assert page['title'] == 'Do you want to check off the Statute of Limitations checkbox?'
-    assert page['default_value'] == previous_choice
-    assert 'Consider raising this defense' in ' '.join(page['body'])
-    assert not current.session.checkbox_selections.get(DEFENSE)
-    current = advance_updated(current, 'no' if previous_choice == 'yes' else 'yes')
-    assert current.current == SUMMARY
-    choices = current.session.checkbox_selections[DEFENSE]
-    assert choices['main'] == ('exclude' if previous_choice == 'yes' else 'include')
-    assert choices['first'] == choices['third'] == 'include'
+def test_revising_personal_timing_shows_main_choice_before_nested_choices(previous_choice,timing):
+    history=intake(payment='missing')+answers(('sol_payment_age','no'),('statute_of_limitations_decision',previous_choice))
+    if previous_choice=='yes':history+=answers(('sol_checkboxes_first_third','yes'),('sol_written','no'))
+    current=change(history,'sol_payment_age',timing)
+    assert current.current=='statute_of_limitations_decision'
+    assert current.page()['default_value']==previous_choice
+    assert not current.session.checkbox_selections
+    current=advance_updated(current,'no' if previous_choice=='yes' else 'yes')
+    if previous_choice=='yes':
+        assert current.current==SUMMARY
+        assert current.session.checkbox_selections[DEFENSE]=={'main':'exclude'}
+    else:
+        assert current.current=='sol_checkboxes_first_third'
+        assert current.session.checkbox_selections[DEFENSE]=={'main':'include'}
 
 
 @pytest.mark.parametrize('previous_timing', ['yes', 'no', 'unknown'])
@@ -176,7 +176,7 @@ def test_revising_personal_timing_shows_main_choice_before_nested_choices(previo
 def test_revisiting_complaint_disagreement_always_asks_personal_timing(previous_timing, agreement):
     history = intake() + answers(('sol_payment_estimate_agree', 'no'), ('sol_payment_age', previous_timing))
     if previous_timing != 'yes':
-        history += answers(('statute_of_limitations_decision', 'yes'), ('sol_checkboxes_first_third', 'yes'), ('sol_written', 'continue'))
+        history += answers(('statute_of_limitations_decision', 'yes'), ('sol_checkboxes_first_third', 'yes'), ('sol_written', 'no'))
     # Changing to agreement temporarily removes personal timing from the path.
     agreed = change(history, 'sol_payment_estimate_agree', 'yes')
     current = change(agreed.history, 'sol_payment_estimate_agree', agreement, revision=agreed.revision)
@@ -187,7 +187,7 @@ def test_revisiting_complaint_disagreement_always_asks_personal_timing(previous_
     assert not current.session.checkbox_selections.get(DEFENSE)
     # The new timing answer, rather than the cached answer, determines the route.
     recent = advance_updated(current, 'yes')
-    assert recent.current == SUMMARY
+    assert recent.current == 'statute_of_limitations_decision'
     assert not recent.session.checkbox_selections.get(DEFENSE)
     qualifying = advance_updated(current, 'no')
     assert qualifying.current == 'statute_of_limitations_decision'

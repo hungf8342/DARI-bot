@@ -12,18 +12,21 @@ fact-only example or `--blank` to start without prefilled examples.
 
 ## Source and scope
 
-The current governing source is [the November 10 script](source-material/2026.11.10/2026.11.10%20Affirmative-Defense-Scripts.docx).
-The prototype includes defenses 1, 2, 5, 8, and 9–21. Standing and Privity (3),
-Failure to State a Cause of Action (4), Identity Theft (6), and Wrong Party (7)
-remain excluded. Preliminary intake retains its 18 October 30 fields and separate
+The current governing source is [the November 14 script](source-material/2026-11.14/2026.11.14%20Affirmative-Defense-Scripts.docx).
+Defenses 1–5 use [November 15 v3](source-material/2026-11-15/2026.11.15%20Affirmative-Defense-Scripts-v3.docx).
+Shared steps, Identity Theft, and Wrong Party use [November 15 v4](source-material/2026-11-15/2026.11.15%20Affirmative-Defense-Scripts-v4.docx).
+Defenses 8–21 retain November 14 wording and routing.
+The prototype includes all 21 defenses in Attachment 4 order. Preliminary intake retains its 18 October 30 fields and separate
 review.
 
-The November 10 `NEW SCREEN:` footnotes determine headers and screen boundaries.
+The November 14 `NEW SCREEN:` footnotes determine headers and screen boundaries,
+with defenses 1–5 from v3 and shared steps/Identity Theft/Wrong Party from v4.
+Revised references use `v3:` and `v4:` keys to preserve later source IDs.
 `screen_layout.yaml` maps their IDs to the prototype's nodes and conditional
 variants; `script_formatting.yaml` extracts the actual headers, source
-paragraph indices, paragraph/list structure, and document fingerprint. All 111
-footnotes are accounted for. The Common Counts fourth nested checkbox is excluded
-because it depends on the excluded Identity Theft defense. Mistake has no new
+paragraph indices, paragraph/list structure, and document fingerprint. All 145 source header references are accounted for, including retained metadata
+for parent screens now merged into confirmation. The Common Counts Only fourth nested checkbox is offered when the user selected
+Identity Theft. Reported suspicion alone does not select or offer that checkbox. Mistake has no new
 footnote and retains its combined explanation/checkbox screen under its name.
 
 A new screen's explanation stays with that screen and does not appear as feedback
@@ -36,11 +39,11 @@ Paragraphs, lists, indentation, and full-month date formatting are preserved.
 Introductions remain separate where screening follows. Ambiguity, Mistake, and
 Unconscionable Contract keep their explanation and checkbox question together.
 No-offer results with their own footnotes are informational screens with Next,
-followed by review. Failure to Mitigate, Common Counts, and Excuse have separate
-main-checkbox explanation screens; those main boxes are derived from the user's
-explicit nested choices. No independent main-box question is added.
+followed by review. Failure to Mitigate, Common Counts, and Excuse derive their main checkboxes
+from explicit nested choices. Their shared main-checkbox reminder now appears
+on Confirm selections, with no extra main-checkbox instruction screen.
 
-Summary checklists use the source’s descriptive nested-option labels in each
+Summary checklists use ordinal numbers and the source’s descriptive nested-option labels in each
 defense and the final review. Failure to Mitigate asks about the declined settlement
 offer first, shows its checkbox guidance or inapplicability result, then asks about
 contact and shows the second checkbox’s result. This order applies with and without
@@ -61,14 +64,68 @@ translated agreement; No can lead to an offer, while Yes finishes without one.
 Missing language is collected before language-specific questions.
 
 Each section ends in its own summary or no-offer result page. The final review
-shows all 17 defenses, nested options, selections, and unresolved questions. Case
+shows all 21 defenses, nested options, selections, and unresolved questions. Case
 details remain accessible throughout. Short answers and date/amount formats follow
-the preliminary script. Browser progress is tab-local; the November 10 version uses
+the preliminary script. Browser progress is tab-local; the v4 update uses
 a new storage key to start a fresh review instead of importing an obsolete path.
+
+## Current shared steps and Standing/Privity
+
+The shared parent-selection step records all ancestors of an explicitly selected
+reason without selecting siblings. Derived parents are recalculated after answers
+and edits. A parent selected independently remains selected when its last child
+is removed. Declining a directly offered parent skips its children.
+
+Confirm selections contains the checkbox visual and a named main-checkbox reminder
+only when something is selected. Nested rows show `(1)`, `(2)`, etc. alongside
+their descriptions. A defense may supply its own complete reminder sentence in
+`confirmation_reminders`; otherwise the shared default names its main checkbox.
+The former shared parent-instruction screen is folded into this review.
+Identity Theft and Wrong Party show separately editable reasons for their shared
+physical checkbox. Any Yes selects it; uncertainty remains separately recorded.
+
+Standing/Privity original-creditor cases now ask about the main defense, then two
+separate arguments if selected. Both arguments show the revised original-creditor
+skip guidance. Debt-buyer cases keep separate claim/proof choices with the new
+wording. Every uncertain choice requires clarification. The current source and
+binding details are in [the November 15 source notes](source-material/2026-11-15/README.md).
+
+## November 14 routing decisions retained for other defenses
+
+All tracked insertions/deletions are read in Word's accepted revision view. The
+source `.docx` retains its tracked changes and comments. Reviewer comments are
+context; unresolved legal questions in comments do not become new screening rules.
+
+Standing/Privity asks about the first nested box for debt buyers whether the
+ownership allegation is present or missing, with the corresponding guidance. The
+second nested box is offered for every debt buyer regardless of attachments.
+Original-creditor Standing/Privity routing uses the retained main
+choice and separate argument choices described above.
+
+Failure to State a Cause of Action now follows the revised Breach of Contract
+and Common Counts groups. Buyer-only ownership checks stay buyer-only; known
+negative screening guidance still leaves checkbox choices to the user. Unknown
+complaint contents return to intake. Either a complaint payment date or breach
+date strictly after July 1, 2024 offers the new Common Counts write-in reason and
+clinic guidance. As confirmed by the user, it shares the physical third checkbox
+with “no proof of plaintiff ownership”; the two reasons are recorded independently
+and either included reason checks that single box. Parent and main boxes derive
+from explicit nested choices.
+
+Identity Theft v4 offers explicit choices after either stolen-card answer and
+for both recognized and unrecognized accounts. Either Yes keeps its shared box
+selected, with each reason separately editable. Wrong Party v4 finishes immediately
+after Yes on its Identity Theft path; No proceeds to an explicit recognition-based
+choice. Recognized accounts are offered that choice too. Clinic notices follow
+the selected-box checkpoints. See [current routing notes](source-material/2026-11-15/README.md).
+
+A new browser storage key starts a fresh review for this source version. Existing
+SQLite/CSV records and original tree-version values are preserved. The guide has
+no supported cross-version resume from an old 17-defense browser path.
 
 ## Script wording and formatting
 
-The approved Word documents govern wording and user-facing paragraph/list structure. The formatting extractor reads all paragraphs, lists, and screen footnotes directly from November 10 and records its source fingerprint. `script_formatting.yaml` records source paragraphs, Word list
+The approved Word documents govern wording and user-facing paragraph/list structure. The formatting extractor reads paragraphs, lists, and screen footnotes from November 14, combines v3 defenses 1–5 with v4 shared steps, Identity Theft, and Wrong Party, and records all three source fingerprints. Each revised paragraph carries its own source path and original paragraph index. `script_formatting.yaml` records source paragraphs, Word list
 levels, and the source document's SHA-256 fingerprint. Regenerate and verify it with:
 
 ```bash
@@ -84,29 +141,29 @@ Reviewer-outline bullets around an entire quoted reply are not presented as
 user-facing list items. The source's actual lists inside quoted explanations are
 preserved, including their separate groups. Text is inserted safely as text.
 
-The formatting layer preserves paragraphs and lists; the SOL adapter separately implements November 10 footnote screen boundaries and routing. Tests compare the generated metadata and all 17
-defense introductions with the November 10 document.
+The formatting layer preserves paragraphs and lists; the SOL adapter implements the November 15 screen boundaries and routing. Tests compare the generated metadata against this mixed source and verify that all 14 later defenses retain their nodes and routes.
 
 ## SOL screen placement
 
-November 10 footnotes define new screens and their headers. Bold directions remain internal;
+November 15 SOL footnotes define these screens and their headers. Bold directions remain internal;
 paragraphs, lists, and indentation preserve source structure within each screen.
 
 | Screen | Content and behavior |
 | --- | --- |
 | Statute of Limitations | General explanation; when the original-creditor complaint omits payment date, its missing-date guidance stays here. |
-| Do you agree with the last payment date alleged in the complaint? | Complaint date and months before filing; agreement or uncertainty acknowledgment appears inline. |
-| Was your last payment after [filing date minus one calendar year]? | Yes means recent payment and no checkbox offer. No means payment on/before the cutoff. Not sure remains explicit uncertainty and permits the offers. The matching acknowledgment appears inline. |
-| Do you want to check off the Statute of Limitations checkbox? | Debt-buyer or qualifying/uncertain original-creditor guidance with the explicit main-box choice. |
-| Do you want to check off both the first and third indented Statute of Limitations checkboxes? | Combined checkbox guidance and choice. Continue to the matching oral/written second-checkbox screen. |
-| Do you want to check off the second indented Statute of Limitations checkbox? | Oral-contract guidance and explicit second-box choice. |
-| The second indented Statute of Limitations checkbox | Written-contract inapplicability guidance on a separate screen; Next opens confirmation. |
+| Do you agree that your last payment date was [LAST.PAYMENT.DATE]? | Complaint date and months before filing; agreement or uncertainty acknowledgment appears inline. |
+| Was your last payment after [filing date minus one calendar year]? | Yes means recent payment. No means payment on/before the cutoff. All three answers lead to an explicit main choice; Not sure remains recorded uncertainty. The matching acknowledgment appears inline. |
+| Do you want to check off the Statute of Limitations checkbox? | Debt-buyer guidance with the explicit main-box choice; this source header is unchanged. |
+| Do you want to raise a Statute of Limitations defense? | Original-creditor guidance: recent payments suggest skipping, qualifying/uncertain timing suggests raising. Yes opens nested choices; No opens confirmation. |
+| Do you want to raise a Statute of Limitations defense for California and Delaware written contracts? | Combined checkbox guidance and choice. Continue to the matching oral/written second-checkbox screen. |
+| Do you want to raise a Statute of Limitations defense for oral contracts? | Oral-contract guidance and explicit second-box choice. |
+| Statute of Limitations defense for oral contracts | Written-contract inapplicability guidance followed by the same explicit oral-defense choice. Both Yes and No are recorded; uncertainty requires clarification. |
 | Confirm selections | Separate review with the approved selected/empty wording, checkbox visual, evidence, and Change controls; also used when no boxes were offered. |
 | Ready to return to the pending question? | Shared clarification wording, Ask a Question, and Next returning to the pending choice or unresolved preliminary field. No extra Yes/No response is required. |
 
 The payment cutoff uses calendar years, including February 28 for a leap-day
 anniversary. Editing the filing date invalidates a retained personal timing answer;
-checkbox eligibility and retained selections use the revised after-cutoff meaning.
+timing guidance uses the revised after-cutoff meaning. Recent timing still permits an explicit choice; an edit cannot automatically select or decline a box.
 After Back/Change revisits payment timing, the main SOL checkbox screen appears
 again before nested choices. A prior main-box choice is prefilled for review;
 submitting it retains applicable nested choices. Back also visits every required screen still on the revised path. Retained answers prefill those screens; the browser waits for Next at each screen instead of jumping over reused answers. This applies across all defenses, including explanations and reviews.
@@ -114,14 +171,20 @@ Disagreeing with the complaint payment date, or answering Not sure, always shows
 the personal cutoff-date question again. A saved personal timing answer may prefill
 that screen only if the filing date is unchanged; it cannot bypass the question.
 Displayed dates use full month names (for example, “September 20, 2025”), including headers, guidance, timelines, and case details. Date input controls and research values retain ISO formats.
-The main box remains an explicit user choice independently of the nested SOL boxes.
+The main SOL box is offered as an explicit choice; selecting a nested option also
+selects its ancestors under the shared rule. Only Yes offers the nested SOL
+choices; No removes dependent choices and goes directly to confirmation. The
+first and third remain grouped, and the second is explicitly offered on either
+oral or written paths. Changing between oral and written agreements requires
+a new second-box answer because the guidance changes.
 Unresolved creditor type, oral agreement, or missing filing date must be clarified
-before the dependent questions proceed. Browser storage has a new November 10 screen-footnotes key so
-saved paths from earlier script versions cannot bypass the November 10 screen sequence.
+before the dependent questions proceed. Browser storage has a new v4 key so
+saved paths cannot bypass the revised choices. Historical research records
+remain preserved under their original tree versions.
 
 ## Ambiguity screen placement
 
-The November 10 source groups the explanation with **Ask about this checkbox**,
+The current Ambiguity section keeps the explanation with **Ask about this checkbox**,
 then explicitly directs **Continue to “Confirm selections.”** Preserve these as
 separate steps:
 
@@ -135,9 +198,9 @@ full explanation with the same checkbox question. Previews do not record a choic
 
 ## Initial defense screens
 
-Every defense starts with its source heading; the Fraud heading includes the November 10 punctuation. For defenses without
+Every defense starts with its source heading; the Fraud heading includes the November 14 punctuation. For defenses without
 screening branches (Ambiguity, Mistake, and Unconscionable Contract), the full
-November 10 explanation and checkbox question appear in the body on that screen.
+November 14 explanation and checkbox question appear in the body on that screen.
 Word bullet lists and paragraph spacing are preserved.
 
 Laches has a separate general-explanation screen, headed “Laches,” followed by
@@ -176,7 +239,8 @@ advance the guide. Approved explanations stay available if the model is unavaila
 
 ## Implementation
 
-`defense_content.yaml` contains November 10 copy and route overrides.
+`defense_content.yaml` contains November 14 copy and route overrides, with
+defenses 1–5 from v3 and shared steps/Identity Theft/Wrong Party from v4.
 `screen_layout.yaml` maps the source footnotes to headers and informational screens.
 `workflow.py` validates those overrides into a prototype-specific tree, renders
 pages and clarification context from that tree, and replays validated histories.
@@ -188,7 +252,7 @@ map remains in `sol_checkbox_dependencies.yaml` and `sol_dependency_map.py`.
 `scripts/run_clickthrough.py` serves the form and clarification endpoints;
 `scripts/assets/clickthrough/` contains the buildless browser assets. The progress
 bar includes all sections and scrolls horizontally. The history limit accommodates
-all 17 sections and clarification returns. `research_collection.py` collects the
+all 21 sections and clarification returns. `research_collection.py` collects the
 research datasets below. `rendering.py` provides shared fact substitution. Tests cover source wording, allowed branches, full
 traversal, no-offer outcomes, uncertainty, nested selections, editing, final review,
 CSV collection, and non-advancing clarification.
@@ -204,7 +268,7 @@ Z.ai through the OpenAI-compatible client. Research records persist locally on t
 ```
 
 Debug mode displays a banner and makes the scrollable section header clickable,
-including Preliminary fields and all 17 defenses. Both the numbered circle and
+including Preliminary fields and all 21 defenses. Both the numbered circle and
 section name activate the link; controls briefly disable while a page loads.
 Versioned asset URLs ensure a refresh loads updated navigation code. A header jump fills unanswered
 intake fields and starts that section directly, without answering or completing
@@ -235,8 +299,9 @@ Normal browser progress and research files remain separate. Restart without
 Running the prototype without `--debug` automatically writes three UTF-8 CSVs to
 `output/clickthrough/`. Use `--collection-dir PATH` to choose another directory.
 All three use the requested variable names and share a random UUID `SESSION.ID`.
-The defense names in column headers match the 17 IDs in `workflow.DEFENSES`.
-The excluded defenses have no columns in new datasets. When an existing collection
+The defense names in column headers match the 21 IDs in `workflow.DEFENSES`.
+All 21 defenses have columns in new datasets; newly added defense columns remain
+blank for historical sessions that never reviewed them. When an existing collection
 directory contains records from an older prototype, exports preserve its historical
 defense columns and rows alongside the new columns.
 
@@ -263,14 +328,16 @@ defense columns and rows alongside the new columns.
   field identifiers from `intake_fields.yaml`, such as `CASE.NUMBER`,
   `PLAINTIFF`, and `COMPLAINT.DATE` (the filing date). Defense questions and deterministic conditions
   use their tree node IDs. Derived original-creditor values and calculated
-  `DEFENSE.<name>.CHECKED` / `TREE.PROJECTION` values are also recorded. Answers
+  `DEFENSE.<name>.CHECKED` / `TREE.PROJECTION` values are also recorded.
+  Derived parents are recorded as program calculations with IDs
+  `CHECKBOX.<defense>.<box>` and values `include` or `exclude`. Answers
   use their stored values (for example `yes`, `no`, `unknown`, or an ISO date).
   Each calculated field first appears only when its own result is determined.
   TREE.PROJECTION is recorded when the tree reaches a checkbox offer or completes
   a no-offer path. CHECKED is recorded after an explicit inclusion, after all
-  offered choices are declined, or on completion of a no-offer path. A first No
-  on the main SOL checkbox does not determine CHECKED while indented choices
-  remain unanswered. Starting a defense, incomplete screening, and uncertain
+  offered choices are declined, or on completion of a no-offer path. No on the main SOL choice skips all nested choices and records
+  CHECKED as No immediately. Recent-payment SOL paths still have a choice, so
+  their TREE.PROJECTION is Yes even though the guidance suggests skipping. Starting a defense, incomplete screening, and uncertain
   checkbox answers do not create negative results. The defense CSV retains its
   one-row-per-session shape, with blank unresolved values.
 

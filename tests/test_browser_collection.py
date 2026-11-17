@@ -200,6 +200,16 @@ function resolveRequest(request, response, ok=true) {request.resolve({ok,json:as
   assert.equal(formatted[2].textContent,'Last paragraph.');
 
   assert.equal(run("friendly('After 2025-09-20?')"),'After September 20, 2025?');
+  // Confirmation reminders follow the checkbox visual, before the answer evidence.
+  run(`page={node_id:'guided_standing_privity_summary',input_type:'summary',
+    section:'Standing/Privity',rows:[{id:'main',label:'Standing/Privity',checked:true,
+      detail:'Main checkbox',status:'Selected',edit_index:null}],
+    confirmation_reminder:'Check the main Standing/Privity checkbox.',review_answers:[]};
+    inputControls();`);
+  assert.equal(node('answer-control').children[0].tagName,'section');
+  assert.equal(node('answer-control').children[1].textContent,'Check the main Standing/Privity checkbox.');
+  assert.equal(node('answer-control').children[2].tagName,'details');
+
   // An edit may retain several answers, but the browser must show each screen.
   run('render=()=>setBusy(false)');
   const workflow=run("updateWorkflow('/api/edit',{history:[{node_id:'earlier',value:'yes'}],edit_index:0,value:'no'})");

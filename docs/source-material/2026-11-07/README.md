@@ -2,7 +2,7 @@
 
 `2026.11.07 Affirmative-Defense-Scripts-v3.docx` was copied unchanged from Windows
 Downloads. It was the November 7 source for the guided prototype.
-The current prototype uses the November 10 document in `../2026.11.10/`.
+The current prototype uses the accepted November 14 document in `../2026-11.14/`.
 
 The prototype includes defenses 1, 2, 5, 8, and 9–21. Defenses 3, 4, 6, and 7 are
 excluded at the user's direction. The October 30 preliminary-fields source remains

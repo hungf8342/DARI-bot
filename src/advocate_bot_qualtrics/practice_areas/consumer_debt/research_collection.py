@@ -15,7 +15,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, field_validator
 
 from .workflow import (
-    COMPLETE, CONTINUE_PAGES, DEFENSES, PRELIMINARY_FIELDS, GuidedAdvanceRequest,
+    COMPLETE, CONTENT, CONTINUE_PAGES, DEFENSES, PRELIMINARY_FIELDS, GuidedAdvanceRequest,
     ClickthroughReview, advance_review, TREE, PARENT_SCREENS, ACTION_SCREENS,
 )
 from .sol_dependency_map import affected_checkboxes
@@ -56,12 +56,19 @@ def item_id(node: str) -> str:
 
 
 def defense_for(node: str) -> set[str]:
+    if node.startswith('CHECKBOX.'):
+        name = node.split('.')[1]
+        return {name} if name in DEFENSES else set()
     if node in PRELIMINARY_FIELDS:
         shared = {"guided_consolidation": {"failure_to_mitigate", "rescission", "accord_satisfaction"},
-                  "guided_suit_type": {"common_counts", "excuse_breach"},
-                  "guided_recognize": {"lack_of_consideration"},
-                  "guided_creditor_type": {"fraud", "waiver"},
-                  "guided_open_date": {"capacity"}}
+                  "guided_suit_type": {"failure_to_state_cause", "common_counts", "excuse_breach"},
+                  "guided_recognize": {"identity_theft", "wrong_party", "lack_of_consideration"},
+                  "guided_creditor_type": {"standing_privity", "failure_to_state_cause", "fraud", "waiver"},
+                  "guided_open_date": {"failure_to_state_cause", "capacity"},
+                  "guided_ownership_claim": {"standing_privity", "failure_to_state_cause"},
+                  "guided_statement": {"failure_to_state_cause"}, "guided_ownership_proof": {"failure_to_state_cause"},
+                  "guided_payment_date": {"failure_to_state_cause"}, "guided_breach_date": {"failure_to_state_cause"},
+                  "guided_original_creditor": {"failure_to_state_cause"}}
         return ({'statute_of_limitations'} if affected_checkboxes(node) else set()) | shared.get(node, set())
     definition = TREE.node_map.get(node)
     return {key for key, spec in DEFENSES.items()
@@ -93,6 +100,17 @@ def snapshot(current: ClickthroughReview) -> tuple[dict, dict, set[str]]:
             values[spec['field']] = str(entry.value) if entry.value is not None else entry.status
     # Capture deterministic condition results, using the tree's stable node IDs.
     values.update(effective.calculations)
+    # Parent selections are program calculations, never fabricated user answers.
+    for name, parents in CONTENT["checkbox_parents"].items():
+        choices = effective.session.checkbox_selections.get(name, {})
+        for box in set(parents.values()):
+            if box in choices:
+                values[f'CHECKBOX.{name}.{box}'] = choices[box]
+    for name, boxes in CONTENT["combined_checkbox_choices"].items():
+        for box in boxes:
+            selection = effective.session.checkbox_selections.get(name, {}).get(box)
+            if selection is not None:
+                values[f'CHECKBOX.{name}.{box}'] = selection
     visited = {a.node_id for a in effective.history}
     defenses = {}
     for name, spec in DEFENSES.items():
@@ -105,7 +123,6 @@ def snapshot(current: ClickthroughReview) -> tuple[dict, dict, set[str]]:
         checked = any(v == 'include' for v in effective.session.checkbox_selections.get(name, {}).values())
         settled = (name in effective.finish_reasons or spec['summary'] in visited
                    or effective.current == spec['summary']
-                   or (name == 'statute_of_limitations' and effective.current == 'sol_written')
                    or PARENT_SCREENS.get(effective.current) == name
                    or (effective.current in ACTION_SCREENS and definition
                        and name in defense_for(effective.current)
@@ -147,7 +164,7 @@ class ResearchCollection:
                          'workflow.py', 'affirmative_defenses.py', 'sol_dependency_map.py',
                          'session.py', 'preliminary.py', 'rendering.py', 'research_collection.py'):
             digest.update(Path(__file__).with_name(filename).read_bytes())
-        self.version = 'guided-17-defenses-2026-11-10-' + digest.hexdigest()[:16]
+        self.version = 'guided-21-defenses-2026-11-14-1-5-v3-shared-identity-wrong-party-v4-' + digest.hexdigest()[:16]
         with self.connect() as db:
             db.executescript('''
                 CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, data TEXT NOT NULL);
@@ -178,6 +195,8 @@ class ResearchCollection:
                 data = {'session': dict(zip(SESSION_COLUMNS, [str(session_id), now(), '', 'No', self.version])),
                         'values': {}, 'revisions': {}, 'defenses': {
                             name: {'CHECKED': '', 'CHANGED': 0, 'TREE.PROJECTION': ''} for name in DEFENSES}}
+            for name in DEFENSES:
+                data['defenses'].setdefault(name, {'CHECKED': '', 'CHANGED': 0, 'TREE.PROJECTION': ''})
             self.save(db, session_id, data)
         self.refresh()
 

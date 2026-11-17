@@ -50,14 +50,16 @@ Run without `--debug` when collecting research results.
 
 ## Scope and data
 
-The guide follows the November 10 scripts for 17 defenses: 1, 2, 5, 8, and 9–21.
-Standing/Privity, Failure to State a Cause of Action, Identity Theft, and Wrong
-Party are excluded. Preliminary intake follows the October 30 fields script.
-Facts determine which choices are offered; only explicit user choices select
-checkboxes. Unknown answers remain distinct from No.
+The guide includes all 21 defenses in Attachment 4 order. Defenses 1–5 follow
+the accepted November 15 v3 script; shared steps, Identity Theft, and Wrong Party
+follow v4. Defenses 8–21 retain November 14 wording and routing. Preliminary
+intake follows October 30, with explicit missing/unknown options for the original
+creditor. Explicit choices select checkboxes and their parents. Separate reasons
+for one checkbox remain editable; any Yes selects the physical box. Unknown
+answers remain distinct from No.
 
 Back preserves answers. Change reconciles the revised path, retains applicable
-answers, and revisits dependent questions. The final review includes all 17
+answers, and revisits dependent questions. The final review includes all 21
 defenses, nested choices, and unresolved questions. Clarification chat explains
 the current page; it cannot record answers or advance the guide.
 
@@ -87,7 +89,9 @@ debug mode, data definitions, and browser-exit timing limitations.
 - `core/`: shared node/response schemas, tree validation, and error types.
 - `llm/` and `prompts/clickthrough_clarification.md`: optional clarification.
 - `docs/source-material/`: approved Word documents and source history. Current
-  defense wording comes from `2026.11.10/`; intake comes from `2026-10-30/`.
+  defense wording comes from `2026-11.14/`, with defenses 1–5 from v3 and shared steps/Identity Theft/Wrong Party from v4
+  in `2026-11-15/`;
+  intake comes from `2026-10-30/`.
 
 The conversation-driven chatbot, Gradio interface, confidence scoring, and Excel
 export have been removed. Their pre-removal snapshot is Git commit `b7a72b0`.

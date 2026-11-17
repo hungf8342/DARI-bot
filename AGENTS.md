@@ -26,10 +26,14 @@ Activation is optional for interactive human terminals. On Windows, use
   confidence scoring, and Excel export have been removed. Do not restore them
   as dependencies of the clickthrough. The pre-removal snapshot is `b7a72b0`.
 - `base_tree.yaml` is still the shared base tree. Guided content/layout
-  overlays and answer bindings depend on its node IDs. Keep it and its source
+  overlays, additional nodes, and answer bindings depend on its node IDs. Keep it and its source
   documents; do not prune nodes merely because the interface skips them.
-- Current defense wording/formatting follows the November 10 source for 17
-  defenses (1, 2, 5, 8, 9–21); preliminary fields follow the October 30 source.
+- Current defense wording/formatting follows the accepted tracked changes in the
+  November 14 source for defenses 8–21; defenses 1–5 follow November 15 v3;
+  shared steps, Identity Theft, and Wrong Party follow November 15 v4.
+  Preliminary fields follow October 30. Read
+  `docs/source-material/2026-11.14/README.md` for retained routing choices and
+  `docs/source-material/2026-11-15/README.md` for current source/routing details.
 - Screening rules belong in `affirmative_defenses.py`; page traversal and edits
   belong in `workflow.py`; text substitution lives in `rendering.py`.
 - Document extraction, autonomous traversal, account sign-in, and cross-device
@@ -41,8 +45,14 @@ Activation is optional for interactive human terminals. On Windows, use
   a session. Example defaults are not effective facts until submitted.
 - The clickthrough filing-date field is `COMPLAINT.DATE`, bound to the internal
   `FILING-DATE` field and `session.filing_date` for SOL screening.
-- Unknown, missing, and No remain distinct. Only explicit user choices select
-  checkboxes. Changes retain independent answers and invalidate affected results.
+- Unknown, missing, and No remain distinct. Explicit user choices select
+  checkboxes and automatically select their ancestors in `checkbox_parents`. Never
+  select sibling reasons automatically. Changes retain independent answers and
+  invalidate affected results; independently selected parents survive removal of
+  their last selected child.
+- Separate Identity Theft and Wrong Party choices remain independent recorded
+  answers; any Yes selects their shared physical checkbox. V4 Wrong Party ends
+  immediately after Yes on the Identity Theft path; No proceeds to recognition.
 - Normal mode collects through `research_collection.py`: SQLite is authoritative,
   with session, defense, and longitudinal response CSV exports. Use one server
   process per collection directory. Preserve historical research records.

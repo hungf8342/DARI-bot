@@ -5,7 +5,7 @@ from advocate_bot_qualtrics.practice_areas.consumer_debt.debug_navigation import
 from advocate_bot_qualtrics.practice_areas.consumer_debt.workflow import (
     CONTENT,DEFENSES,ClickthroughReview,GuidedAnswer,GuidedEditRequest,edit_review,
 )
-from test_clickthrough_workflow import review,advance_updated,both_defenses_history,answers
+from test_clickthrough_workflow import review,advance_updated,both_defenses_history,answers,laches_history,default_answer
 
 
 @pytest.mark.parametrize('choice',['yes','no'])
@@ -24,15 +24,18 @@ def test_mistake_general_explanation_and_checkbox_share_one_screen(choice):
     assert CONTENT['confirmation']['selected' if choice=='yes' else 'empty'] in current.page()['body']
 
 
-def test_normal_traversal_goes_directly_from_ambiguity_review_to_mistake_question():
-    history=both_defenses_history(complete=False)
-    current=review(history+answers(('guided_ambiguity_summary','continue')))
-    assert current.current=='mistake_decision'
-    assert 'Mistake may apply' in ' '.join(current.page()['body'])
-    current=advance_updated(current,'no')
+def test_normal_traversal_includes_standing_and_cause_before_mistake():
+    current=review(both_defenses_history(complete=False))
     current=advance_updated(current,'continue')
-    assert current.current=='guided_laches_intro'
-    assert 'Laches may apply if:' in ' '.join(current.page()['body'])
+    assert current.current=='guided_standing_privity_intro'
+    seen=set()
+    for _ in range(100):
+        if current.current=='mistake_decision':break
+        seen.add(current._current_defense())
+        current=advance_updated(current,default_answer(current))
+    else:pytest.fail('Mistake was not reached')
+    assert {'standing_privity','failure_to_state_cause'} <= seen
+    assert 'Mistake may apply' in ' '.join(current.page()['body'])
 
 
 def test_laches_explanation_has_its_own_page_before_screening():
@@ -92,16 +95,14 @@ def test_general_explanation_survives_mistake_uncertainty_retry():
 
 
 def test_old_completed_path_keeps_choices_after_an_unrelated_edit():
-    history=both_defenses_history(complete=False)+answers(
-        ('guided_ambiguity_summary','continue'),('guided_mistake_intro','continue'),
-        ('mistake_decision','no'),('guided_mistake_summary','continue'),
-        ('guided_laches_intro','continue'),('laches','yes'),('laches_statements','no'),
-        ('laches_lost_info','no'),('laches_decision','yes'))
+    history=laches_history()+answers(('laches','yes'),('laches_statements','no'),('laches_lost_info','no'),('laches_decision','yes'))
+    index=next(i for i,a in enumerate(history) if a.node_id=='mistake_decision')
+    history.insert(index,GuidedAnswer(node_id='guided_mistake_intro',value='continue'))
     current=review(history)
     assert current.current==DEFENSES['laches']['summary']
     index=next(i for i,a in enumerate(history) if a.node_id=='guided_plaintiff')
     current=edit_review({},GuidedEditRequest(history=history,edit_index=index,value='Corrected Bank'))
-    for _ in range(8):
+    for _ in range(16):
         if current.current==DEFENSES['laches']['summary']:
             break
         current=advance_updated(current,'continue')
@@ -136,7 +137,7 @@ def test_saved_laches_path_without_intro_replays_and_edits():
     assert current.history==history
     index=next(i for i,a in enumerate(history) if a.node_id=='guided_plaintiff')
     current=edit_review({},GuidedEditRequest(history=history,debug_section='laches',edit_index=index,value='Changed Bank'))
-    for _ in range(8):
+    for _ in range(16):
         if current.current==DEFENSES['laches']['summary']:
             break
         current=advance_updated(current,'continue')

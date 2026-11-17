@@ -13,7 +13,8 @@ def script_text(text: str, session: InteractiveSessionState) -> str:
         complaint_payment, personalize,
     )
 
-    for token, tag in (("[OPEN.DATE]", "OPEN-DATE"), ("[LAST.PAYMENT.DATE]", "LAST-PAYMENT-DATE")):
+    for token, tag in (("[OPEN.DATE]", "OPEN-DATE"), ("[LAST.PAYMENT.DATE]", "LAST-PAYMENT-DATE"),
+                       ("[BREACH.DATE]", "BREACH-DATE")):
         entry = session.preliminary_fields.get(tag)
         value = entry.complaint_value if entry else None
         text = text.replace(token, value.isoformat() if isinstance(value, date) else "unknown")

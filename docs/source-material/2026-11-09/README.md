@@ -1,8 +1,8 @@
 # November 9 affirmative-defense scripts
 
 `2026.11.09 Affirmative-Defense-Scripts.docx` is retained as the November 9
-source for the guided prototype. The current prototype uses the November 10
-revision in `../2026.11.10/`. The copy is unchanged from Windows Downloads.
+source for the guided prototype. The current prototype uses the accepted November 14
+revision in `../2026-11.14/`. The copy is unchanged from Windows Downloads.
 
 The prototype includes defenses 1, 2, 5, 8, and 9–21. Defenses 3, 4, 6, and 7 remain
 excluded. The Common Counts fourth nested option, which depends on the excluded

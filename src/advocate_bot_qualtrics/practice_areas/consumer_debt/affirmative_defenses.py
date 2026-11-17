@@ -111,6 +111,8 @@ def script_condition(session: InteractiveSessionState, key: str) -> str:
     if not key.startswith("rule:"):
         return script_fact(session, key)
     rule = key.removeprefix("rule:")
+    if rule == "sol_timing_explicitly_uncertain":
+        return "yes" if session.defense_answers.get("sol_payment_age") == "unknown" else "no"
     if rule == "payment_available":
         return payment_comparison_branch(session)
     if rule == "agreed_payment_age":
@@ -123,12 +125,27 @@ def script_condition(session: InteractiveSessionState, key: str) -> str:
         return "english" if language and language.casefold() == "english" else "other" if language else "unknown"
     if rule == "standing_proof":
         return script_fact(session, "complaint:OWNERSHIP.PROOF") if script_fact(session, "field:PLAINTIFF") == "original" else "unknown"
+    if rule in {"cause_both_dates_missing", "cause_attachments_missing"}:
+        tags = ("LAST-PAYMENT-DATE", "BREACH-DATE") if rule == "cause_both_dates_missing" else ("STATEMENT", "OWNERSHIP.PROOF")
+        values = [script_fact(session, "complaint:" + tag) for tag in tags]
+        return "no" if "yes" in values else "yes" if values == ["no", "no"] else "unknown"
+    if rule == "cause_recent_debt":
+        tags = ("LAST-PAYMENT-DATE", "BREACH-DATE")
+        for tag in tags:
+            entry = session.preliminary_fields.get(tag)
+            if (script_fact(session, "complaint:" + tag) == "yes" and entry
+                    and isinstance(entry.complaint_value, date)
+                    and entry.complaint_value > date(2024, 7, 1)):
+                return "yes"
+        return "unknown" if any(script_fact(session, "complaint:" + tag) == "unknown" for tag in tags) else "no"
     if rule in {"opening_date_known", "payment_date_known"}:
         tag = "OPEN-DATE" if rule == "opening_date_known" else "LAST-PAYMENT-DATE"
         entry = session.preliminary_fields.get(tag)
         return "yes" if (script_fact(session, "complaint:" + tag) == "yes"
                          and entry and isinstance(entry.complaint_value, date)) else "no"
     if rule == "identity":
+        if "identity_stolen_card" in session.defense_answers:
+            return session.defense_answers["identity_stolen_card"]
         suspicion = session.defense_answers.get("identity_suspected")
         if suspicion in {"yes", "no"}:
             return suspicion
@@ -174,20 +191,100 @@ def script_condition(session: InteractiveSessionState, key: str) -> str:
     raise ValueError(f"Unsupported script rule: {rule}")
 
 
-def run_script_action(session: InteractiveSessionState, action: str) -> str:
+def sync_combined_checkbox_choices(session: InteractiveSessionState, structures: dict) -> None:
+    """Keep distinct explicit reasons; any Yes selects their shared physical box."""
+    for defense, boxes in structures.items():
+        for box, nodes in boxes.items():
+            answers = [session.defense_answers[node] for node in nodes if node in session.defense_answers]
+            if not answers:
+                continue
+            choices = session.checkbox_selections.setdefault(defense, {})
+            if "yes" in answers:
+                choices[box] = "include"
+            elif "unknown" in answers:
+                choices.pop(box, None)
+            else:
+                choices[box] = "exclude"
+            if box == "main":
+                if box in choices:
+                    session.defense_selections[defense] = choices[box]
+                else:
+                    session.defense_selections.pop(defense, None)
+
+
+def sync_checkbox_parents(session: InteractiveSessionState, structures: dict, *, tree, defense=None, final=False) -> None:
+    """Derive ancestors from explicit choices without selecting sibling reasons.
+
+    Rebuild derived values so removing a child cannot leave a stale parent. A
+    parent's independent Yes survives removal of its last selected child.
+    """
+    nodes = tree.node_map
+    for name, parents in structures.items():
+        if defense is not None and name != defense:
+            continue
+        choices = session.checkbox_selections.get(name)
+        if choices is None:
+            if not final:
+                continue
+            choices = session.checkbox_selections.setdefault(name, {})
+        explicit = {}
+        for node_id, answer in session.defense_answers.items():
+            node = nodes.get(node_id)
+            if node and answer in {"yes", "no"}:
+                for box in node.selection_checkboxes:
+                    if box.defense_id == name:
+                        explicit[box.checkbox_id] = "include" if answer == "yes" else "exclude"
+        for parent in set(parents.values()):
+            choices.pop(parent, None)
+        choices.update(explicit)
+
+        def resolve(box):
+            children = [child for child, parent in parents.items() if parent == box]
+            values = [resolve(child) for child in children]
+            own = explicit.get(box) if children else choices.get(box)
+            result = "include" if own == "include" or "include" in values else own
+            if result is None and children and (all(v == "exclude" for v in values)
+                    or (final and any(v is not None for v in values))):
+                result = "exclude"
+            if result is not None:
+                choices[box] = result
+            return result
+
+        resolve("main")
+        if final and "main" not in choices:
+            choices["main"] = "exclude"
+        if "main" in choices:
+            session.defense_selections[name] = choices["main"]
+        else:
+            session.defense_selections.pop(name, None)
+
+
+def run_script_action(session: InteractiveSessionState, action: str, *, tree=None) -> str:
     """Record workflow progress without turning screening facts into selections."""
     from advocate_bot_qualtrics.practice_areas.consumer_debt.base_tree import BASE_TREE_DEFINITION
 
+    tree = tree or BASE_TREE_DEFINITION
     operation, defense, *parts = action.split(":")
-    definition = next(node for node in BASE_TREE_DEFINITION.nodes if node.action == action)
+    definition = next(node for node in tree.nodes if node.action == action)
     session.script_visited.append(definition.id)
     if operation == "script_finish":
         session.defense_results[defense] = {"status": "finished", "reason": definition.question}
+    elif operation == "script_parent":
+        group = "breach" if "breach" in definition.id else "common"
+        choices = session.checkbox_selections.setdefault(defense, {})
+        if group == "common":
+            reasons = ("common_third_ownership", "common_third_recent_debt")
+            if any(key in choices for key in reasons):
+                choices["common_third"] = "include" if any(choices.get(key) == "include" for key in reasons) else "exclude"
+        nested = [value for key, value in choices.items() if key.startswith(group + "_") and key != group + "_parent"]
+        choices[group + "_parent"] = "include" if "include" in nested else "exclude"
+        choices["main"] = "include" if any(value == "include" for key, value in choices.items() if key != "main") else "exclude"
+        session.defense_selections[defense] = choices["main"]
     elif operation == "script_confirm":
         session.defense_results[defense] = {"status": "confirmed", "reason": "Choices confirmed by the user."}
     elif operation == "script_issue":
         key = parts[0]
-        help_node = BASE_TREE_DEFINITION.node(definition.next)
+        help_node = tree.node(definition.next)
         retry = next((b.target for b in help_node.branches if b.id == "retry"), "")
         session.defense_open_questions[key] = {"defense": defense, "reason": definition.question, "retry_node": retry}
         session.defense_results[defense] = {"status": "unresolved", "reason": definition.question}

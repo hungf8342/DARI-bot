@@ -74,18 +74,18 @@ def test_headers_completion_exit_and_restart_persistence(collector):
     session = rows(directory, 'sessions.csv')[0]
     assert session['SESSION.COMPLETED'] == 'Yes'
     assert session['SESSION.END.TIME'] == ''
-    assert session['SESSION.TREE.VERSION'].startswith('guided-17-defenses-2026-11-10-')
+    assert session['SESSION.TREE.VERSION'].startswith('guided-21-defenses-2026-11-14-1-5-v3-shared-identity-wrong-party-v4-')
     assert client.post('/api/collection/end', json={'session_id': sid}).status_code == 200
     assert datetime.fromisoformat(rows(directory, 'sessions.csv')[0]['SESSION.END.TIME']).tzinfo
     module['create_app'](collection_dir=directory)
     assert rows(directory, 'sessions.csv')[0]['SESSION.COMPLETED'] == 'Yes'
     defense = rows(directory, 'defenses.csv')[0]
     from advocate_bot_qualtrics.practice_areas.consumer_debt.workflow import DEFENSES
-    assert len(DEFENSES) == 17
+    assert len(DEFENSES) == 21
     for name in DEFENSES:
         assert defense[f'DEFENSE.{name}.CHECKED'] in {'Yes', 'No'}
         assert defense[f'DEFENSE.{name}.TREE.PROJECTION'] in {'Yes', 'No'}
-    assert 'DEFENSE.identity_theft.CHECKED' not in defense
+    assert defense['DEFENSE.identity_theft.CHECKED'] == 'No'
     for name, checked, projection in [('statute_of_limitations', 'Yes', 'Yes'),
         ('ambiguity', 'Yes', 'Yes'), ('laches', 'No', 'No')]:
         assert defense[f'DEFENSE.{name}.CHECKED'] == checked
@@ -196,9 +196,7 @@ def test_new_required_question_does_not_invalidate_pending_later_defenses(collec
 
 def test_projection_yes_does_not_require_selecting_a_checkbox(collector):
     client, directory, sid, _ = collector
-    history = completed_history('buyer')
-    history = [a.model_copy(update={'value': 'no'}) if a.node_id in
-               {'statute_of_limitations_decision', 'sol_checkboxes_first_third'} else a for a in history]
+    history = intake('buyer') + answers(('statute_of_limitations_decision', 'no'))
     run_history(client, sid, history)
     defense = rows(directory, 'defenses.csv')[0]
     assert defense['DEFENSE.statute_of_limitations.CHECKED'] == 'No'
@@ -299,34 +297,36 @@ def test_sol_projection_precedes_explicit_checkbox_choice(collector, choice):
     if choice == 'yes':
         assert [r['RESPONSE.ITEM.VALUE'] for r in selections] == ['Yes']
     else:
-        assert selections == []  # Indented boxes still require answers.
-        result = step(client, sid, result, 'no')
+        assert result['page']['input_type'] == 'summary'
         assert [r['RESPONSE.ITEM.VALUE'] for r in
                 defense_events(directory, 'statute_of_limitations', 'CHECKED')] == ['No']
 
 
-def test_sol_unchecked_result_waits_for_the_oral_checkbox(collector):
+def test_sol_checked_result_stays_selected_while_nested_choices_are_pending(collector):
     client, directory, sid, _ = collector
     result = run_history(client, sid, intake('buyer', oral='yes'))
-    result = step(client, sid, result, 'no')
+    result = step(client, sid, result, 'yes')
     result = step(client, sid, result, 'no')
     assert result['page']['node_id'] == 'sol_checkbox_second'
-    assert not defense_events(directory, 'statute_of_limitations', 'CHECKED')
+    assert [r['RESPONSE.ITEM.VALUE'] for r in defense_events(directory, 'statute_of_limitations', 'CHECKED')] == ['Yes']
     step(client, sid, result, 'no')
     assert [r['RESPONSE.ITEM.VALUE'] for r in
-            defense_events(directory, 'statute_of_limitations', 'CHECKED')] == ['No']
+            defense_events(directory, 'statute_of_limitations', 'CHECKED')] == ['Yes']
 
 
-def test_no_offer_result_records_no_only_after_the_tree_finishes_screening(collector):
+def test_recent_payment_offers_explicit_choice_before_recording_no(collector):
     client, directory, sid, _ = collector
     result = run_history(client, sid, intake(payment='2026-07-01'))
     assert not defense_events(directory, 'statute_of_limitations', 'TREE.PROJECTION')
     assert not defense_events(directory, 'statute_of_limitations', 'CHECKED')
     result = step(client, sid, result, 'yes')
+    assert result['page']['node_id'] == 'statute_of_limitations_decision'
+    assert not defense_events(directory, 'statute_of_limitations', 'CHECKED')
+    result = step(client, sid, result, 'no')
     assert result['page']['input_type'] == 'summary'
     for field in ('TREE.PROJECTION', 'CHECKED'):
         events = defense_events(directory, 'statute_of_limitations', field)
-        assert [r['RESPONSE.ITEM.VALUE'] for r in events] == ['No']
+        assert [r['RESPONSE.ITEM.VALUE'] for r in events] == ['Yes' if field == 'TREE.PROJECTION' else 'No']
         assert events[0]['RESPONSE.REVISION.NUMBER'] == '0'
 
 
@@ -373,7 +373,8 @@ def test_reopening_screening_invalidates_results_instead_of_recording_false_no(c
         assert events[-1]['RESPONSE.ITEM.VALUE'] == ''
         assert rows(directory, 'defenses.csv')[0][f'DEFENSE.statute_of_limitations.{field}'] == ''
     result = step(client, sid, result, 'yes')
-    for field in ('CHECKED', 'TREE.PROJECTION'):
-        events = defense_events(directory, 'statute_of_limitations', field)
-        assert events[-1]['RESPONSE.EVENT.TYPE'] == 'Program calculation'
-        assert events[-1]['RESPONSE.ITEM.VALUE'] == 'No'
+    assert result['page']['node_id'] == 'statute_of_limitations_decision'
+    assert defense_events(directory, 'statute_of_limitations', 'TREE.PROJECTION')[-1]['RESPONSE.ITEM.VALUE'] == 'Yes'
+    assert defense_events(directory, 'statute_of_limitations', 'CHECKED')[-1]['RESPONSE.ITEM.VALUE'] == ''
+    result = step(client, sid, result, 'no')
+    assert defense_events(directory, 'statute_of_limitations', 'CHECKED')[-1]['RESPONSE.ITEM.VALUE'] == 'No'

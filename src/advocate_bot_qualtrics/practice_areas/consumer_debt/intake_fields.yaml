@@ -1,4 +1,4 @@
-# Preliminary fields and approved explanations from the October 30 script.
+# October 30 preliminary intake; original-creditor missing/unknown alternatives support November 14 routing.
 source: docs/source-material/2026-10-30/2026.10.30-preliminary-fields.docx
 fields:
   guided_case_number:
@@ -56,6 +56,7 @@ fields:
         statements. A charge-off creditor is the company that held the account when it recorded the unpaid
         balance as a loss; it is not always the original creditor. Your older statements or account agreement
         may help you confirm the name.
+    allow_missing: true
   guided_law_firm:
     field: LAW.FIRM
     tag: LAW-FIRM

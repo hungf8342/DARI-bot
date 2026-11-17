@@ -2,7 +2,7 @@
 
 Each request replays a valid answer path into a fresh session. Edits reconcile
 previous answers against the new path, retaining only applicable choices.
-This adapter never submits chat messages as answers or enters excluded defenses.
+This adapter never submits chat messages as answers; it reviews all 21 defenses.
 """
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from advocate_bot_qualtrics.core.schemas import CurrentNode, NodeExplanation
 from .script_formatting import ScriptFormatter, SOURCE_FORMATTING, normalized
 from advocate_bot_qualtrics.core.tree_definition import TreeDefinition
-from advocate_bot_qualtrics.practice_areas.consumer_debt.affirmative_defenses import calendar_cutoff, run_script_action, script_condition, script_fact
+from advocate_bot_qualtrics.practice_areas.consumer_debt.affirmative_defenses import calendar_cutoff, run_script_action, script_condition, script_fact, sync_checkbox_parents, sync_combined_checkbox_choices
 from advocate_bot_qualtrics.practice_areas.consumer_debt.rendering import script_text
 from advocate_bot_qualtrics.practice_areas.consumer_debt.session import apply_interactive_branch, init_session
 from advocate_bot_qualtrics.practice_areas.consumer_debt.base_tree import BASE_TREE_DEFINITION as BASE_TREE
@@ -37,7 +37,10 @@ DEFENSES = {
     "ambiguity": {"label": "Ambiguity", "number": 2, "summary": AMBIGUITY_SUMMARY},
 }
 for _number, _key, _label in [
-    (5, "mistake", "Mistake"), (8, "laches", "Laches"),
+    (3, "standing_privity", "Standing and Privity"),
+    (4, "failure_to_state_cause", "Failure to State a Cause of Action"),
+    (5, "mistake", "Mistake"), (6, "identity_theft", "Identity Theft"),
+    (7, "wrong_party", "Wrong Party"), (8, "laches", "Laches"),
     (9, "fraud", "Fraud Misrepresentation and Concealment"),
     (10, "failure_to_mitigate", "Failure to Mitigate"), (11, "common_counts", "Common Counts Only"),
     (12, "unconscionable_contract", "Unconscionable Contract"), (13, "rescission", "Rescission"),
@@ -52,13 +55,20 @@ for _number, _key, _label in [
 SUMMARIES = {spec["summary"] for spec in DEFENSES.values()}
 INTRO_DEFENSES = {spec["intro"]: key for key, spec in DEFENSES.items() if "intro" in spec}
 SUMMARY_DEFENSES = {spec["summary"]: key for key, spec in DEFENSES.items()}
-CONTINUE_PAGES = {*SUMMARIES, PRELIMINARY_SUMMARY, *INTRO_DEFENSES, "guided_welcome", "sol_written"}
+CONTINUE_PAGES = {*SUMMARIES, PRELIMINARY_SUMMARY, *INTRO_DEFENSES, "guided_welcome"}
 with Path(__file__).with_name("defense_content.yaml").open(encoding="utf-8") as _content_file:
     CONTENT = yaml.safe_load(_content_file)
 with Path(__file__).with_name("screen_layout.yaml").open(encoding="utf-8") as _layout_file:
     SCREEN_LAYOUT = yaml.safe_load(_layout_file)
 if SCREEN_LAYOUT["source"] != CONTENT["source"] or CONTENT["source"] != SOURCE_FORMATTING["source"]:
     raise ValueError("Screen layout, wording, and formatting must use the same approved source.")
+if SCREEN_LAYOUT.get("sol_source") != CONTENT["sol_source"] or CONTENT["sol_source"] != SOURCE_FORMATTING["sol_source"]:
+    raise ValueError("SOL layout, wording, and formatting must use the same SOL source.")
+if not SCREEN_LAYOUT.get("revision_source") == CONTENT["revision_source"] == SOURCE_FORMATTING["revision_source"]:
+    raise ValueError("Defenses 1–5 must use the same revised source.")
+for _source_key in ("shared_source", "identity_source", "wrong_party_source"):
+    if not SCREEN_LAYOUT.get(_source_key) == CONTENT[_source_key] == SOURCE_FORMATTING[_source_key]:
+        raise ValueError(f"Layout, wording, and formatting disagree on {_source_key}.")
 ACTION_SCREENS = set(SCREEN_LAYOUT["information_screens"])
 PARENT_SCREENS = SCREEN_LAYOUT["parent_screens"]
 EXTRA_SCREENS = SCREEN_LAYOUT["extra_screens"]
@@ -81,7 +91,8 @@ AMBIGUITY_BOX_LABELS = {"main": ("Ambiguity", "Main checkbox")}
 def _prototype_tree() -> TreeDefinition:
     """Validate source-specific patches against the shared base tree."""
     data = BASE_TREE.model_dump()
-    data["version"] = "2026.11.10"
+    data["version"] = "2026.11.14+1-5.2026.11.15-v3+shared-identity-wrong-party-v4"
+    data["nodes"].extend(CONTENT.get("additional_nodes", []))
     for node in data["nodes"]:
         patch = CONTENT["nodes"].get(node["id"], {})
         for field, value in patch.items():
@@ -126,7 +137,6 @@ for _node in TREE.nodes:
             FEEDBACK_BOX_LABELS[_box.defense_id].setdefault(_box.checkbox_id, _box.label)
 for _defense, _labels in CONTENT["summary_labels"].items():
     FEEDBACK_BOX_LABELS[_defense].update(_labels)
-PARENT_FROM_NESTED = {"failure_to_mitigate", "common_counts", "excuse_breach"}
 
 
 def _condition(session, key):
@@ -142,8 +152,7 @@ def render_node(node_id, facts, session):
     defense = next(key for key, spec in DEFENSES.items() if spec["label"] == definition.discussion_topic)
 
     def wording(node):
-        text = next((v.text for v in node.question_variants
-                     if _condition(session, v.fact_key) == v.equals), node.question)
+        text = _node_wording(node.id, session)
         restatements = [v.text for v in node.fact_restatements
                         if _condition(session, v.fact_key) == v.equals]
         return script_text("\n\n".join(part for part in [*restatements, text] if part), session)
@@ -178,6 +187,19 @@ def _node_wording(node_id: str, session) -> str:
     node = TREE.node(node_id)
     text = next((v.text for v in node.question_variants
                  if _condition(session, v.fact_key) == v.equals), node.question)
+    if node_id in CONTENT.get("parent_group_screens", {}):
+        group = CONTENT["parent_group_screens"][node_id]
+        choices = session.checkbox_selections.get("failure_to_state_cause", {})
+        if not any(value == "include" for key, value in choices.items()
+                   if key.startswith(group + "_") and key != group + "_parent"):
+            text = CONTENT["confirmation"]["empty"]
+    restatements = [item["text"] for item in CONTENT.get("date_restatements", {}).get(node_id, [])
+                    if script_fact(session, "complaint:" + item["tag"]) == "yes"]
+    if restatements:
+        paragraphs = text.split("\n\n")
+        position = CONTENT.get("date_restatement_positions", {}).get(node_id, len(paragraphs) - 1)
+        paragraphs[position:position] = restatements
+        text = "\n\n".join(paragraphs)
     return script_text(text, session)
 
 
@@ -410,7 +432,7 @@ class ClickthroughReview:
             if node in SUMMARY_DEFENSES:
                 defense = SUMMARY_DEFENSES[node]
                 if defense not in self.finish_reasons and defense + "_completed" in TREE.node_map:
-                    run_script_action(self.session, "script_confirm:" + defense)
+                    run_script_action(self.session, "script_confirm:" + defense, tree=TREE)
                 order = list(DEFENSES)
                 index = order.index(defense) + 1
                 if index == len(order):
@@ -430,7 +452,7 @@ class ClickthroughReview:
                     self._drain(INTRO_DEFENSES[node] + "_intro")
             elif node in ACTION_SCREENS:
                 definition = TREE.node(node)
-                run_script_action(self.session, definition.action)
+                run_script_action(self.session, definition.action, tree=TREE)
                 if definition.action.startswith("script_finish:"):
                     defense = self._current_defense()
                     self.finish_reasons[defense] = _node_wording(node, self.session)
@@ -456,12 +478,14 @@ class ClickthroughReview:
             else:
                 branch = "submit"
                 submitted = value
-            apply_interactive_branch(self.session, node, branch, submitted_text=submitted)
+            apply_interactive_branch(self.session, node, branch, submitted_text=submitted, tree=TREE)
         else:
             if value not in {b.id for b in definition.branches}:
                 raise ValueError("Choose one of the answers shown on this page.")
             branch = value
-            apply_interactive_branch(self.session, node, value)
+            apply_interactive_branch(self.session, node, value, tree=TREE)
+        sync_combined_checkbox_choices(self.session, CONTENT["combined_checkbox_choices"])
+        sync_checkbox_parents(self.session, CONTENT["checkbox_parents"], tree=TREE, defense=self._current_defense())
         self.notices = []
         self._drain(TREE.route(node, branch))
 
@@ -473,7 +497,7 @@ class ClickthroughReview:
         if kind == "choice":
             if value not in {option["value"] for option in spec["options"]}:
                 raise ValueError("Choose one of the answers shown on this page.")
-            apply_interactive_branch(self.session, binding, value)
+            apply_interactive_branch(self.session, binding, value, tree=TREE)
         elif kind == "date":
             alternatives = {"unknown", "missing"} if spec["allow_missing"] else {"unknown"}
             parsed = None
@@ -484,7 +508,7 @@ class ClickthroughReview:
                     raise ValueError("Enter a real date in YYYY-MM-DD format, or choose an available alternative.") from exc
                 if parsed.isoformat() != value:
                     raise ValueError("Use YYYY-MM-DD for the date.")
-            apply_interactive_branch(self.session, binding, "submit" if parsed else value, submitted_date=parsed)
+            apply_interactive_branch(self.session, binding, "submit" if parsed else value, submitted_date=parsed, tree=TREE)
         else:
             if not value.strip():
                 raise ValueError("Enter an answer to continue.")
@@ -496,11 +520,19 @@ class ClickthroughReview:
                 except InvalidOperation as exc:
                     raise ValueError("Enter a positive amount of money.") from exc
                 value = format(amount, ".2f")
-            apply_interactive_branch(self.session, binding, "unknown" if value == "unknown" else "submit", submitted_text=value)
+            branch = value if value == "unknown" or (value == "missing" and spec.get("allow_missing")) else "submit"
+            apply_interactive_branch(self.session, binding, branch, submitted_text=value if branch == "submit" else None, tree=TREE)
+        if spec["field"] not in {"ORAL", "RECOGNIZE", "CONSOLIDATION"}:
+            # The form records complaint contents, including a later resolution
+            # of an unknown value. Do not retain the old unknown as its contents.
+            entry = self.session.preliminary_fields[spec["tag"]]
+            entry.complaint_value = entry.value
+            entry.complaint_status = "present" if entry.status == "known" else entry.status
+            entry.complaint_source = binding
         # The preliminary script derives this value for original-creditor cases.
         if node in {"guided_plaintiff", "guided_creditor_type"} and script_fact(self.session, "field:PLAINTIFF") == "original":
             name = self.session.plaintiff_name
-            apply_interactive_branch(self.session, "prelim_original_creditor", "submit" if name else "unknown", submitted_text=name)
+            apply_interactive_branch(self.session, "prelim_original_creditor", "submit" if name else "unknown", submitted_text=name, tree=TREE)
         if not advance:
             return
         self.notices = []
@@ -528,6 +560,8 @@ class ClickthroughReview:
 
     def _drain(self, node_id: str) -> None:
         for _ in range(60):
+            if node_id in CONTENT.get("parent_group_screens", {}):
+                run_script_action(self.session, TREE.node(node_id).action, tree=TREE)
             if node_id in ACTION_SCREENS:
                 self.current = node_id
                 return
@@ -547,17 +581,20 @@ class ClickthroughReview:
                                  "accord_consolidation_resolve": ("guided_consolidation", "accord_consolidation"),
                                  "common_counts_suit_resolve": ("guided_suit_type", "common_counts_suit"),
                                  "excuse_suit_type_resolve": ("guided_suit_type", "excuse_suit_type")}
+            for key, spec in CONTENT.get("field_returns", {}).items():
+                fields = spec.get("fields", [spec.get("field")])
+                field = next((field for field in fields if field and
+                              script_fact(self.session, "complaint:" + PRELIMINARY_FIELDS[field]["tag"]) == "unknown"), fields[0])
+                unresolved_fields[key] = (field, spec["route"])
             if node_id in unresolved_fields:
                 self.current, self.pending_preliminary_route = unresolved_fields[node_id]
                 return
             if node_id in {key + "_confirm" for key in DEFENSES}:
                 defense = node_id.removesuffix("_confirm")
-                if defense in PARENT_FROM_NESTED:
-                    choices = self.session.checkbox_selections.setdefault(defense, {})
-                    choices["main"] = "include" if any(v == "include" for k, v in choices.items() if k != "main") else "exclude"
-                    self.session.defense_selections[defense] = choices["main"]
-                    self.current = next(node for node, key in PARENT_SCREENS.items() if key == defense)
-                    return
+                sync_checkbox_parents(self.session, CONTENT["checkbox_parents"], tree=TREE, defense=defense, final=True)
+                # The shared parent reminder now belongs on Confirm selections.
+                # Keep older screen definitions as provenance, but do not add an
+                # extra parent-instruction page to the revised path.
                 if self.response_origin and defense not in PRESENTATION["confirmation_on_review_defenses"]:
                     choices = self.session.checkbox_selections.get(defense, {})
                     selected = "include" in choices.values()
@@ -583,10 +620,10 @@ class ClickthroughReview:
             if definition.kind == "condition":
                 branch = _condition(self.session, definition.condition_key)
                 self.calculations[node_id] = branch
-                apply_interactive_branch(self.session, node_id, branch)
+                apply_interactive_branch(self.session, node_id, branch, tree=TREE)
                 node_id = TREE.route(node_id, branch)
             elif definition.kind == "action":
-                run_script_action(self.session, definition.action)
+                run_script_action(self.session, definition.action, tree=TREE)
                 text = render_node(node_id, None, self.session).question.split("\n\n", 1)[-1]
                 operation, defense, *parts = definition.action.split(":")
                 if operation == "script_issue":
@@ -596,8 +633,6 @@ class ClickthroughReview:
                     if node_id not in PRESENTATION["response_only_nodes"] and node_id != "sol_missing":
                         target = (self.answer_response if self.response_origin and node_id not in
                                   PRESENTATION["context_actions"] else self.notices)
-                        if node_id == "sol_written" and self.response_origin:
-                            target = self.answer_response
                         target.append(text)
                 if operation == "script_finish":
                     self.session.defense_results[defense]["reason"] = text
@@ -622,7 +657,7 @@ class ClickthroughReview:
         default = self.defaults.get(spec["field"])
         if type(default) is bool:
             default = "yes" if default else "no"
-        elif default is None and spec["field"] in self.defaults and kind == "date" and spec["allow_missing"]:
+        elif default is None and spec["field"] in self.defaults and spec.get("allow_missing"):
             default = "missing"
         if default is not None and kind == "currency":
             default = str(default).replace("$", "").replace(",", "")
@@ -642,6 +677,8 @@ class ClickthroughReview:
             body = "This preliminary field is still unresolved. Use the explanation or ask clinic staff, then update the field to continue."
         return {"title": spec["title"], "body": [body], "input_type": kind,
                 "field_label": spec["label"], "default_value": default, "options": spec.get("options", []), "help_text": help_text,
+                "allow_unknown": self.current == "guided_original_creditor",
+                "allow_text_missing": self.current == "guided_original_creditor",
                 "date_alternatives": ([{"value": "missing", "label": "Not listed in the complaint"}] if kind == "date" and spec["allow_missing"] else []) + ([{"value": "unknown", "label": "I’m not sure"}] if kind == "date" else []),
                 "why": help_blocks[0] if help_blocks else "Confirm this preliminary field before reviewing defenses.", "stage": 0}
 
@@ -655,14 +692,55 @@ class ClickthroughReview:
                     if box.defense_id == defense:
                         label = CONTENT["summary_labels"].get(defense, {}).get(box.checkbox_id, box.label)
                         labels.setdefault(box.checkbox_id, (label, "Main checkbox" if box.checkbox_id == "main" else "Nested checkbox"))
+        if defense == "failure_to_state_cause":
+            labels = {"main": (DEFENSES[defense]["label"], "Main checkbox")}
+            for key in ("breach_parent", "breach_first", "breach_second", "breach_third", "breach_fourth", "breach_fifth",
+                        "common_parent", "common_first", "common_second", "common_third"):
+                labels[key] = (CONTENT["summary_labels"][defense][key], "Nested checkbox")
         for box, (label, detail) in labels.items():
+            reasons = {"common_third_ownership", "common_third_recent_debt"}
+            if defense == "failure_to_state_cause" and box in reasons:
+                continue
             index = next((i for i, answer in enumerate(self.history)
                           if answer.node_id in TREE.node_map and any(
-                              b.checkbox_id == box and b.defense_id == defense for b in TREE.node(answer.node_id).selection_checkboxes)), None)
+                              (b.checkbox_id == box or (defense == "failure_to_state_cause" and box == "common_third" and b.checkbox_id in reasons))
+                              and b.defense_id == defense for b in TREE.node(answer.node_id).selection_checkboxes)), None)
             selection = choices.get(box)
+            if defense == "failure_to_state_cause" and box == "common_third":
+                included = [text for key, text in [("common_third_ownership", "no proof of plaintiff ownership"),
+                                                   ("common_third_recent_debt", "debt incurred after July 1, 2024")]
+                            if choices.get(key) == "include"]
+                if included:
+                    label += " — write in: " + "; ".join(included)
+            ordinal = CONTENT["checkbox_ordinals"].get(defense, {}).get(box)
+            if box == "main":
+                label = CONTENT["main_checkbox_names"].get(defense, label)
+            if ordinal:
+                label = f"({ordinal}) {label}"
             rows.append({"id": box, "defense_id": defense, "label": label, "detail": detail,
                          "checked": selection == "include", "status": "Selected" if selection == "include" else "Not selected" if selection == "exclude" else "Not offered on this path",
-                         "edit_index": index, "derived": box == "main" and defense in PARENT_FROM_NESTED})
+                         "edit_index": index, "derived": box in CONTENT["checkbox_parents"].get(defense, {}).values() and index is None,
+                         "ordinal": ordinal})
+            combined = CONTENT["combined_checkbox_choices"].get(defense, {}).get(box, [])
+            if combined:
+                latest = {answer.node_id: (i, answer) for i, answer in enumerate(self.history) if answer.node_id in combined}
+                rows[-1]["choice_reasons"] = [
+                    {"node_id": answer.node_id, "label": CONTENT["checkbox_choice_labels"][answer.node_id],
+                     "value": {"yes": "Include this defense", "no": "Do not include this defense", "unknown": "Not sure"}.get(answer.value, answer.value),
+                     "edit_index": i}
+                    for i, answer in latest.values()]
+                rows[-1]["edit_index"] = None
+            if defense == "failure_to_state_cause" and box == "common_third":
+                rows[-1]["write_in_reasons"] = []
+                for reason, reason_label in [("common_third_ownership", "No proof of plaintiff ownership"),
+                                              ("common_third_recent_debt", "Debt incurred after July 1, 2024")]:
+                    reason_index = next((i for i, answer in enumerate(self.history) if answer.node_id in TREE.node_map
+                                         and any(item.checkbox_id == reason and item.defense_id == defense
+                                                 for item in TREE.node(answer.node_id).selection_checkboxes)), None)
+                    if reason_index is not None:
+                        rows[-1]["write_in_reasons"].append({"label": reason_label,
+                            "value": "Include this reason" if choices.get(reason) == "include" else "Do not include this reason",
+                            "edit_index": reason_index})
         return rows
 
     def case_details(self) -> list[dict]:
@@ -690,7 +768,10 @@ class ClickthroughReview:
         """
         if defense not in {DEFENSE, "ambiguity", "laches"}:
             result = []
-            dependencies = {"fraud": ["guided_creditor_type"],
+            dependencies = {"standing_privity": ["guided_creditor_type", "guided_ownership_claim"],
+                "failure_to_state_cause": ["guided_creditor_type", "guided_suit_type", "guided_payment_date", "guided_breach_date"],
+                "identity_theft": ["guided_recognize"], "wrong_party": ["guided_recognize"],
+                "fraud": ["guided_creditor_type"],
                 "failure_to_mitigate": ["guided_consolidation"], "common_counts": ["guided_suit_type"],
                 "rescission": ["guided_consolidation"], "lack_of_consideration": ["guided_recognize"],
                 "accord_satisfaction": ["guided_consolidation"], "excuse_breach": ["guided_suit_type"],
@@ -702,6 +783,11 @@ class ClickthroughReview:
                 if node and node.discussion_topic == DEFENSES[defense]["label"] and node.discussion_mode != "questions" and not node.selection_checkboxes:
                     result.append({"node_id": node.id, "label": script_text(node.question, self.session),
                                    "value": {"yes": "Yes", "no": "No", "unknown": "Not sure"}.get(answer.value, answer.value), "edit_index": index})
+                if node and defense == "failure_to_state_cause" and any(
+                        box.checkbox_id in {"common_third_ownership", "common_third_recent_debt"} for box in node.selection_checkboxes):
+                    result.append({"node_id": node.id, "label": node.selection_checkboxes[0].label,
+                                   "value": "Include this write-in reason" if answer.value == "yes" else "Do not include this reason",
+                                   "edit_index": index})
             return result
         if defense == "ambiguity":
             return []
@@ -773,7 +859,7 @@ class ClickthroughReview:
         if self.current in PRELIMINARY_FIELDS:
             page = self._intake_page()
         elif self.current == "guided_welcome":
-            prototype_scope = "This prototype currently includes preliminary fields and 17 defenses. Standing and Privity (3), Failure to State a Cause of Action (4), Identity Theft (6), and Wrong Party (7) are omitted. Ask clinic staff about those defenses."
+            prototype_scope = "This prototype currently includes preliminary fields and all 21 defenses in Attachment 4 order."
             page = {"title": "Overview", "body": CONTENT["overview"], "input_type": "continue", "stage": 0,
                     "why": prototype_scope, "help_text": "\n\n".join([*CONTENT["overview"], prototype_scope]),
                     "visual": {"type": "overview"}, "next_label": "Start review"}
@@ -800,7 +886,7 @@ class ClickthroughReview:
                 body = next(body for body in EXTRA_SCREENS[self.current]["bodies"]
                             if "fact_key" not in body or _condition(self.session, body["fact_key"]) == body["equals"])
                 text = script_text(body["text"], self.session)
-            page = {"title": _screen_header(self.current, self.session), "body": [text],
+            page = {"title": _screen_header(self.current, self.session) or section, "body": [text],
                     "input_type": "continue", "stage": 1, "help_text": text,
                     "why": "Review the guidance before confirming your selections."}
         elif self.current in {*SUMMARIES, COMPLETE}:
@@ -811,7 +897,7 @@ class ClickthroughReview:
             next_label = "Continue to " + DEFENSES[list(DEFENSES)[next_index]]["label"] if next_index < len(DEFENSES) else "Finish review"
             confirmation = CONTENT["confirmation"]["selected" if any(r["checked"] for r in rows) else "empty"]
             page = {"title": "Your review is complete" if self.current == COMPLETE else f"{section} review complete" if finished else f"Review your {section} selections", "stage": 2,
-                    "body": ["You’ve reviewed the 17 defenses included in this prototype. Raise your hand and notify clinic staff if you have further questions."] if self.current == COMPLETE else (["No checkboxes were offered in this section. Review the answers below or continue."]
+                    "body": ["You’ve reviewed the 21 defenses included in this prototype. Raise your hand and notify clinic staff if you have further questions."] if self.current == COMPLETE else (["No checkboxes were offered in this section. Review the answers below or continue."]
                           if self.finish_reasons[defense] in self.answer_response else [self.finish_reasons[defense]]) if finished else [*self.notices, ("Review the checkbox selections below. Use Change to update an answer before continuing." if confirmation in self.answer_response else confirmation)],
                     "input_type": "complete" if self.current == COMPLETE else "summary", "rows": rows,
                     "review_answers": self.review_answers(defense),
@@ -826,6 +912,11 @@ class ClickthroughReview:
                 page["help_text"] = "\n\n".join(self._summary_help(key) for key in DEFENSES)
             elif finished:
                 page["body"] = [confirmation]
+            if self.current in SUMMARIES and any(row["checked"] for row in rows):
+                name = CONTENT["main_checkbox_names"].get(defense, section)
+                reminder = CONTENT["confirmation_reminders"].get(defense, CONTENT["confirmation"]["reminder"])
+                page["confirmation_reminder"] = reminder.replace("[DEFENSE NAME]", name)
+                page["body"].append(page["confirmation_reminder"])
         else:
             definition = TREE.node(self.current)
             rendered = render_node(self.current, None, self.session)
@@ -856,6 +947,12 @@ class ClickthroughReview:
                 page["why"] = "Payment timing is one fact used in this section. Check whether the complaint’s date matches your records."
             elif definition.selection_checkboxes:
                 page["options"] = [{"value": "yes", "label": "Yes, check both boxes" if definition.checkboxes else "Yes, check this box"}, {"value": "no", "label": "No, leave both unchecked" if definition.checkboxes else "No, leave this box unchecked"}, {"value": "unknown", "label": "I’m not sure yet"}]
+                if defense == DEFENSE:
+                    page["options"] = [{"value": value, "label": label} for value, label in CONTENT["sol_choice_labels"].items()]
+                    page["why"] = "Choose whether to include this defense or reason in your Answer. Your selections will be mapped to Attachment 4 at review."
+                    page["question_text"] = question
+                    if self.current == "sol_written":
+                        page["body"].append(question)
             if self.current in {"sol_payment_estimate_agree", "sol_payment_age"}:
                 payment = self.session.preliminary_fields.get("LAST-PAYMENT-DATE")
                 payment_date = payment.complaint_value if payment else None
@@ -864,7 +961,7 @@ class ClickthroughReview:
                     page["visual"] = {"type": "timeline", "payment": payment_date.isoformat(), "filing": filing.isoformat(),
                                       "months": round((filing - payment_date).days / 30.4375, 1)}
             if self.current == "sol_payment_estimate_agree":
-                page["title"] = "Do you agree with the last payment date alleged in the complaint?"
+                page["title"] = script_text("Do you agree that your last payment date was [LAST.PAYMENT.DATE]?", self.session)
                 page["body"] = [*self.notices, _node_wording(self.current, self.session).split("\n\n", 1)[1]]
             if self.current == "sol_payment_age":
                 # V3 retains the original footnote header and adds the plaintiff
@@ -883,6 +980,11 @@ class ClickthroughReview:
             page["title"] = section
         header = _screen_header(self.current, self.session)
         if header is not None:
+            if page["input_type"] == "choice" and self.current in TREE.node_map and TREE.node(self.current).selection_checkboxes and defense in CONTENT["combined_checkbox_choices"]:
+                question = _node_wording(self.current, self.session).rsplit("\n\n", 1)[-1]
+                page["question_text"] = question
+                if question != header and question not in page["body"]:
+                    page["body"].append(question)
             page["title"] = header
         page.update({"node_id": self.current, "can_back": bool(self.history), "case_details": self.case_details(),
                      "section": "Preliminary fields" if preliminary else section if self.current != COMPLETE else "Review complete",
@@ -916,6 +1018,13 @@ class ClickthroughReview:
                     if (row["checked"], row["status"]) != (previous["checked"], previous["status"]):
                         row["previous_status"] = previous["status"]
                         page["changes"].append({"label": row["label"], "before": previous["status"], "after": row["status"]})
+                    before_reasons = {item["label"]: item["value"] for item in previous.get("write_in_reasons", [])}
+                    after_reasons = {item["label"]: item["value"] for item in row.get("write_in_reasons", [])}
+                    for label in dict.fromkeys([*before_reasons, *after_reasons]):
+                        before_value = before_reasons.get(label, "Not offered on this path")
+                        after_value = after_reasons.get(label, "Not offered on this path")
+                        if before_value != after_value:
+                            page["changes"].append({"label": label, "before": before_value, "after": after_value})
                 page["revision_notice"] = ("Your details were updated. Review the checkbox changes below." if page["changes"]
                                            else "Your details were updated. Your checkbox selections are unchanged.")
                 if not compared:
@@ -927,6 +1036,15 @@ class ClickthroughReview:
                                    (self.current in TREE.node_map or self.pending_preliminary_route is not None))
         formatter = ScriptFormatter(self.session)
         page["body_blocks"] = formatter.blocks(page["body"])
+        if self.current == "guided_failure_to_state_cause_intro":
+            items = [script_text(item["text"], self.session) for item in CONTENT["complaint_contents"]
+                     if script_fact(self.session, item["fact_key"]) == "yes"]
+            if items:
+                caption = CONTENT["complaint_contents_caption"]
+                page["body"].extend([caption, *items])
+                page["body_blocks"].extend([{"type": "paragraph", "text": caption},
+                                            {"type": "list", "ordered": False, "items": [{"text": item} for item in items]}])
+                page["help_text"] += "\n\n" + "\n".join([caption, *items])
         page["help_blocks"] = formatter.blocks([page["help_text"]])
         if "answer_responses" in page:
             page["answer_response_blocks"] = {value: formatter.blocks(texts)
@@ -1048,7 +1166,7 @@ def _dependency_plan(review: ClickthroughReview, saved: dict[str, SavedAnswer], 
     for node in ("sol_creditor_type_resolve", "sol_oral_gate_resolve"):
         record = records.get(node)
         if record and record.answer.value in {"yes", "no", "original", "buyer"}:
-            apply_interactive_branch(assessment.session, node, record.answer.value)
+            apply_interactive_branch(assessment.session, node, record.answer.value, tree=TREE)
 
     assessment.current = "sol_payment_estimate_agree"
     retained = _reusable_answer(assessment, records)
@@ -1066,6 +1184,10 @@ def _dependency_plan(review: ClickthroughReview, saved: dict[str, SavedAnswer], 
 
     choices = {}
     for node, record in records.items():
+        if node in {"sol_checkbox_second", "sol_written"}:
+            expected = "sol_checkbox_second" if script_fact(assessment.session, "field:ORAL") == "yes" else "sol_written"
+            if node != expected:
+                continue
         if node in TREE.node_map:
             for box in TREE.node(node).selection_checkboxes:
                 if box.defense_id == DEFENSE:

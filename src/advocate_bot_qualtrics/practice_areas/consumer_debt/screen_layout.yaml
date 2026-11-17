@@ -1,272 +1,365 @@
-# November 10 screen footnotes. IDs refer to the approved Word source.
-source: docs/source-material/2026.11.10/2026.11.10 Affirmative-Defense-Scripts.docx
+# Nov 14 defenses 8–21; Nov 15 v3 defenses 1–5; v4 shared steps, Identity Theft and Wrong Party.
+source: docs/source-material/2026-11.14/2026.11.14 Affirmative-Defense-Scripts.docx
 headers:
   guided_sol_intro:
-    footnote: '1'
+    footnote: v3:1
   statute_of_limitations_decision:
-    footnote: '5'
+    footnote: v3:5
     variants:
     - fact_key: field:PLAINTIFF
       equals: buyer
-      footnote: '2'
+      footnote: v3:2
   sol_payment_estimate_agree:
-    footnote: '3'
+    footnote: v3:3
   sol_payment_age:
-    footnote: '4'
+    footnote: v3:4
   sol_checkboxes_first_third:
-    footnote: '6'
+    footnote: v3:6
   sol_checkbox_second:
-    footnote: '7'
+    footnote: v3:7
   sol_written:
-    footnote: '8'
+    footnote: v3:8
   ambiguity_decision:
-    footnote: '9'
+    footnote: v3:9
   guided_laches_intro:
-    footnote: '10'
-  laches: &id001
-    footnote: '11'
-  laches_statements: &id002
-    footnote: '12'
-  laches_lost_info: &id003
-    footnote: '13'
+    footnote: '37'
+  laches:
+    footnote: '38'
+  laches_statements:
+    footnote: '39'
+  laches_lost_info:
+    footnote: '40'
   laches_decision:
-    footnote: '14'
+    footnote: '41'
   laches_finish:
-    footnote: '15'
+    footnote: '42'
   guided_fraud_intro:
-    footnote: '16'
+    footnote: '43'
   fraud_decision:
-    footnote: '19'
+    footnote: '46'
     variants:
     - fact_key: rule:identity
       equals: 'yes'
-      footnote: '17'
+      footnote: '44'
   fraud_hidden_facts:
-    footnote: '18'
-  fraud_finish:
-    footnote: '20'
-  guided_failure_to_mitigate_intro:
-    footnote: '21'
-  mitigation_contact: &id004
-    footnote: '25'
-    variants:
-    - fact_key: field:CONSOLIDATION
-      equals: 'yes'
-      footnote: '31'
-  mitigation_settlement: &id005
-    footnote: '22'
-    variants:
-    - fact_key: field:CONSOLIDATION
-      equals: 'yes'
-      footnote: '28'
-  mitigation_first_checkbox:
-    footnote: '23'
-    variants:
-    - fact_key: field:CONSOLIDATION
-      equals: 'yes'
-      footnote: '29'
-  mitigation_first_no:
-    footnote: '24'
-    variants:
-    - fact_key: field:CONSOLIDATION
-      equals: 'yes'
-      footnote: '30'
-  mitigation_second_no:
-    footnote: '26'
-    variants:
-    - fact_key: field:CONSOLIDATION
-      equals: 'yes'
-      footnote: '32'
-  mitigation_second_checkbox:
-    footnote: '27'
-    variants:
-    - fact_key: field:CONSOLIDATION
-      equals: 'yes'
-      footnote: '33'
-  guided_common_counts_intro:
-    footnote: '35'
-  common_counts_finish:
-    footnote: '36'
-  common_counts_first_checkbox:
-    footnote: '37'
-  common_counts_renege: &id006
-    footnote: '38'
-  common_counts_second_checkbox:
-    footnote: '39'
-  common_counts_insurance: &id007
-    footnote: '40'
-  common_counts_third_checkbox:
-    footnote: '41'
-  common_counts_fifth_checkbox:
-    footnote: '43'
-  unconscionable_contract_decision:
     footnote: '45'
-  guided_rescission_intro:
-    footnote: '46'
-  rescission_request_close:
+  fraud_finish:
     footnote: '47'
-    variants:
-    - fact_key: field:CONSOLIDATION
-      equals: 'yes'
-      footnote: '49'
-  rescission_no_request:
+  guided_failure_to_mitigate_intro:
     footnote: '48'
-    variants:
-    - fact_key: field:CONSOLIDATION
-      equals: 'yes'
-      footnote: '50'
-  rescission_refuse_close:
-    footnote: '51'
-    variants:
-    - fact_key: field:CONSOLIDATION
-      equals: 'yes'
-      footnote: '54'
-  rescission_decision:
+  mitigation_contact:
     footnote: '52'
     variants:
     - fact_key: field:CONSOLIDATION
       equals: 'yes'
+      footnote: '58'
+  mitigation_settlement:
+    footnote: '49'
+    variants:
+    - fact_key: field:CONSOLIDATION
+      equals: 'yes'
       footnote: '55'
-  rescission_granted:
-    footnote: '53'
+  mitigation_first_checkbox:
+    footnote: '50'
     variants:
     - fact_key: field:CONSOLIDATION
       equals: 'yes'
       footnote: '56'
-  guided_lack_of_consideration_intro:
-    footnote: '57'
-  lack_of_consideration_decision:
+  mitigation_first_no:
+    footnote: '51'
+    variants:
+    - fact_key: field:CONSOLIDATION
+      equals: 'yes'
+      footnote: '57'
+  mitigation_second_no:
+    footnote: '53'
+    variants:
+    - fact_key: field:CONSOLIDATION
+      equals: 'yes'
+      footnote: '59'
+  mitigation_second_checkbox:
+    footnote: '54'
+    variants:
+    - fact_key: field:CONSOLIDATION
+      equals: 'yes'
+      footnote: '60'
+  guided_common_counts_intro:
+    footnote: '62'
+  common_counts_finish:
     footnote: '63'
+  common_counts_first_checkbox:
+    footnote: '64'
+  common_counts_renege:
+    footnote: '65'
+  common_counts_second_checkbox:
+    footnote: '66'
+  common_counts_insurance:
+    footnote: '67'
+  common_counts_third_checkbox:
+    footnote: '68'
+  common_counts_fifth_checkbox:
+    footnote: '70'
+  unconscionable_contract_decision:
+    footnote: '72'
+  guided_rescission_intro:
+    footnote: '73'
+  rescission_request_close:
+    footnote: '74'
+    variants:
+    - fact_key: field:CONSOLIDATION
+      equals: 'yes'
+      footnote: '76'
+  rescission_no_request:
+    footnote: '75'
+    variants:
+    - fact_key: field:CONSOLIDATION
+      equals: 'yes'
+      footnote: '77'
+  rescission_refuse_close:
+    footnote: '78'
+    variants:
+    - fact_key: field:CONSOLIDATION
+      equals: 'yes'
+      footnote: '81'
+  rescission_decision:
+    footnote: '79'
+    variants:
+    - fact_key: field:CONSOLIDATION
+      equals: 'yes'
+      footnote: '82'
+  rescission_granted:
+    footnote: '80'
+    variants:
+    - fact_key: field:CONSOLIDATION
+      equals: 'yes'
+      footnote: '83'
+  guided_lack_of_consideration_intro:
+    footnote: '84'
+  lack_of_consideration_decision:
+    footnote: '90'
     variants:
     - fact_key: rule:identity
       equals: 'yes'
-      footnote: '58'
+      footnote: '85'
   consideration_used_card:
-    footnote: '59'
+    footnote: '86'
   consideration_used:
-    footnote: '60'
+    footnote: '87'
   consideration_other_user:
-    footnote: '61'
+    footnote: '88'
   consideration_intended:
-    footnote: '62'
+    footnote: '89'
   guided_accord_satisfaction_intro:
-    footnote: '64'
+    footnote: '91'
   accord_compliance:
-    footnote: '65'
+    footnote: '92'
     variants:
     - fact_key: field:CONSOLIDATION
       equals: 'yes'
-      footnote: '68'
+      footnote: '95'
   accord_satisfaction_decision:
-    footnote: '66'
+    footnote: '93'
     variants:
     - fact_key: field:CONSOLIDATION
       equals: 'yes'
-      footnote: '69'
+      footnote: '96'
   accord_finish:
-    footnote: '67'
+    footnote: '94'
     variants:
     - fact_key: field:CONSOLIDATION
       equals: 'yes'
-      footnote: '70'
+      footnote: '97'
   guided_excuse_breach_intro:
-    footnote: '71'
+    footnote: '98'
   excuse_finish_claim:
-    footnote: '72'
-  excuse_unconsented_change: &id008
-    footnote: '73'
+    footnote: '99'
+  excuse_unconsented_change:
+    footnote: '100'
   excuse_first_checkbox:
-    footnote: '74'
+    footnote: '101'
   excuse_second_checkbox:
-    footnote: '75'
-  excuse_modified: &id009
-    footnote: '76'
+    footnote: '102'
+  excuse_modified:
+    footnote: '103'
   excuse_third_checkbox:
-    footnote: '77'
-  excuse_insurance: &id010
-    footnote: '78'
+    footnote: '104'
+  excuse_insurance:
+    footnote: '105'
   excuse_fourth_checkbox:
-    footnote: '79'
+    footnote: '106'
   excuse_fifth_checkbox:
-    footnote: '80'
+    footnote: '107'
   guided_capacity_intro:
-    footnote: '82'
+    footnote: '109'
   guided_capacity_opening:
-    footnote: '83'
+    footnote: '110'
   capacity_minor:
-    footnote: '84'
+    footnote: '111'
   capacity_decision:
-    footnote: '85'
+    footnote: '112'
     variants:
     - fact_key: answer:capacity_incapacitated
       equals: 'yes'
-      footnote: '88'
+      footnote: '115'
   capacity_incapacitated:
-    footnote: '86'
+    footnote: '113'
   capacity_disclosure:
-    footnote: '87'
+    footnote: '114'
   capacity_staff_help:
-    footnote: '89'
+    footnote: '116'
   capacity_finish:
-    footnote: '90'
+    footnote: '117'
   guided_waiver_intro:
-    footnote: '91'
+    footnote: '118'
   waiver_payment_without_penalty:
-    footnote: '92'
+    footnote: '119'
   waiver_decision:
-    footnote: '93'
+    footnote: '120'
   waiver_finish:
-    footnote: '94'
+    footnote: '121'
   guided_oral_modification_intro:
-    footnote: '95'
+    footnote: '122'
   guided_oral_modification_change:
-    footnote: '96'
+    footnote: '123'
   oral_modification_agreement:
-    footnote: '97'
+    footnote: '124'
   oral_modification_decision:
-    footnote: '98'
+    footnote: '125'
   oral_modification_finish:
-    footnote: '99'
+    footnote: '126'
   guided_tender_payment_intro:
-    footnote: '100'
+    footnote: '127'
   tender_payment_refused:
-    footnote: '101'
+    footnote: '128'
   tender_payment_decision:
-    footnote: '102'
+    footnote: '129'
   tender_payment_finish:
-    footnote: '103'
+    footnote: '130'
   guided_language_1632_intro:
-    footnote: '104'
+    footnote: '131'
   language_english:
-    footnote: '105'
+    footnote: '132'
   language_negotiation:
-    footnote: '106'
+    footnote: '133'
   language_negotiation_no:
-    footnote: '107'
+    footnote: '134'
   language_contract:
-    footnote: '108'
+    footnote: '135'
   language_1632_decision:
-    footnote: '109'
+    footnote: '136'
   language_translation_present:
-    footnote: '110'
-  laches_resolve: *id001
-  laches_statements_resolve: *id002
-  laches_lost_info_resolve: *id003
-  mitigation_contact_resolve: *id004
-  mitigation_settlement_resolve: *id005
-  common_counts_renege_resolve: *id006
-  common_counts_insurance_resolve: *id007
-  excuse_unconsented_change_resolve: *id008
-  excuse_modified_resolve: *id009
-  excuse_insurance_resolve: *id010
+    footnote: '137'
+  laches_resolve:
+    footnote: '38'
+  laches_statements_resolve:
+    footnote: '39'
+  laches_lost_info_resolve:
+    footnote: '40'
+  mitigation_contact_resolve:
+    footnote: '52'
+    variants:
+    - fact_key: field:CONSOLIDATION
+      equals: 'yes'
+      footnote: '58'
+  mitigation_settlement_resolve:
+    footnote: '49'
+    variants:
+    - fact_key: field:CONSOLIDATION
+      equals: 'yes'
+      footnote: '55'
+  common_counts_renege_resolve:
+    footnote: '65'
+  common_counts_insurance_resolve:
+    footnote: '67'
+  excuse_unconsented_change_resolve:
+    footnote: '100'
+  excuse_modified_resolve:
+    footnote: '103'
+  excuse_insurance_resolve:
+    footnote: '105'
   guided_failure_to_mitigate_parent:
-    footnote: '34'
+    footnote: '61'
   guided_common_counts_parent:
-    footnote: '44'
+    footnote: '71'
   guided_excuse_breach_parent:
-    footnote: '81'
+    footnote: '108'
+  guided_standing_privity_intro:
+    footnote: v3:10
+  standing_first:
+    footnote: v3:12
+    variants:
+    - fact_key: complaint:OWNERSHIP
+      equals: 'yes'
+      footnote: v3:11
+  standing_second_buyer:
+    footnote: v3:13
+  standing_original_choice:
+    footnote: v3:14
+  guided_failure_to_state_cause_intro:
+    footnote: v3:18
+  cause_buyer_explanation:
+    footnote: v3:19
+  cause_original_explanation:
+    footnote: v3:20
+  cause_breach_first:
+    footnote: v3:21
+  cause_breach_second_buyer:
+    footnote: v3:22
+  cause_breach_open_choice:
+    footnote: v3:23
+  cause_breach_dates_choice:
+    footnote: v3:24
+  cause_breach_attachment_checkbox:
+    footnote: v3:25
+  cause_common_first:
+    footnote: v3:26
+  cause_common_second_buyer:
+    footnote: v3:27
+  cause_common_attachment_checkbox:
+    footnote: v3:28
+  cause_recent_debt_choice:
+    footnote: v3:29
+  guided_identity_theft_intro:
+    footnote: v4:32
+  identity_stolen_card:
+    footnote: v4:33
+  identity_theft_decision:
+    footnote: v4:34
+  guided_wrong_party_intro:
+    footnote: v4:41
+  wrong_party_identity_choice:
+    footnote: v4:42
+  wrong_party_account_choice:
+    footnote: v4:43
+  common_counts_fourth_checkbox:
+    footnote: '69'
+  mistake_decision:
+    footnote: v3:31
+  standing_original_first:
+    footnote: v3:15
+  standing_original_second:
+    footnote: v3:16
+  identity_negative_choice:
+    footnote: v4:36
+  identity_negative_notice:
+    footnote: v4:37
+  identity_account_choice:
+    footnote: v4:38
+  identity_account_notice:
+    footnote: v4:40
+  wrong_party_recognized_choice:
+    footnote: v4:43
+  wrong_party_recognized_notice:
+    footnote: v4:44
+  identity_clinic_notice:
+    footnote: v4:35
+  wrong_party_clinic_notice:
+    footnote: v4:45
+  identity_recognized_choice:
+    footnote: v4:38
+  identity_recognized_notice:
+    footnote: v4:39
 information_screens:
-- sol_written
 - laches_finish
 - fraud_finish
 - mitigation_first_no
@@ -285,6 +378,14 @@ information_screens:
 - language_english
 - language_negotiation_no
 - language_translation_present
+- cause_buyer_explanation
+- cause_original_explanation
+- identity_clinic_notice
+- wrong_party_clinic_notice
+- identity_negative_notice
+- identity_account_notice
+- wrong_party_recognized_notice
+- identity_recognized_notice
 parent_screens:
   guided_failure_to_mitigate_parent: failure_to_mitigate
   guided_common_counts_parent: common_counts
@@ -297,17 +398,17 @@ extra_screens:
       equals: 'yes'
       text: 'According to the complaint, this account was opened on [OPEN.DATE].
 
-        If that date is incorrect, use the date you believe you actually entered the
-        agreement when answering the following questions.'
-    - text: 'The complaint did not appear to include the date this account was opened.
-        Try to remember when you opened the account.
+        If that date is incorrect, use the date you believe you actually entered the agreement when answering
+        the following questions.'
+    - text: 'The complaint did not appear to include the date this account was opened. Try to remember
+        when you opened the account.
 
-        The following questions concern your age and ability to understand the agreement
-        when you entered it.'
+        The following questions concern your age and ability to understand the agreement when you entered
+        it.'
       fact_key: complaint:OPEN-DATE
       equals: 'no'
-    - text: 'Ask a clarifying question with the “Ask a Question” button or speak with
-        clinic staff before choosing an answer.
+    - text: 'Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+        choosing an answer.
 
         When you’re ready, click the “Next” button to choose your answer.
 
@@ -315,11 +416,14 @@ extra_screens:
   guided_oral_modification_change:
     defense: oral_modification
     bodies:
-    - text: 'Earlier, you said that [PLAINTIFF] agreed to change the original contract
-        but is not honoring the new agreement.
+    - text: 'Earlier, you said that [PLAINTIFF] agreed to change the original contract but is not honoring
+        the new agreement.
 
-        The following question asks whether that change or another was agreed to during
-        a conversation.'
-excluded_footnotes:
-- '42'
-clarification_footnote: '0'
+        The following question asks whether that change or another was agreed to during a conversation.'
+excluded_footnotes: []
+clarification_footnote: v4:0
+sol_source: docs/source-material/2026-11-15/2026.11.15 Affirmative-Defense-Scripts-v3.docx
+revision_source: docs/source-material/2026-11-15/2026.11.15 Affirmative-Defense-Scripts-v3.docx
+shared_source: docs/source-material/2026-11-15/2026.11.15 Affirmative-Defense-Scripts-v4.docx
+identity_source: docs/source-material/2026-11-15/2026.11.15 Affirmative-Defense-Scripts-v4.docx
+wrong_party_source: docs/source-material/2026-11-15/2026.11.15 Affirmative-Defense-Scripts-v4.docx

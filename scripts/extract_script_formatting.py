@@ -11,17 +11,34 @@ from zipfile import ZipFile
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / 'docs/source-material/2026.11.10/2026.11.10 Affirmative-Defense-Scripts.docx'
+SOURCE = ROOT / 'docs/source-material/2026-11.14/2026.11.14 Affirmative-Defense-Scripts.docx'
+SOL_SOURCE = ROOT / 'docs/source-material/2026-11-15/2026.11.15 Affirmative-Defense-Scripts-v3.docx'
+SHARED_SOURCE = ROOT / 'docs/source-material/2026-11-15/2026.11.15 Affirmative-Defense-Scripts-v4.docx'
 OUTPUT = ROOT / 'src/advocate_bot_qualtrics/practice_areas/consumer_debt/script_formatting.yaml'
 NS = {'w':'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
 W = '{'+NS['w']+'}'
 
 
+def accepted_xml(data: bytes) -> ET.Element:
+    """Read Word's accepted revision view without modifying the source document.
+
+    Insertions and moved-to text remain; deleted/moved-from text and historical
+    formatting properties must not leak into text, lists, or screen references.
+    """
+    root = ET.fromstring(data)
+    removed = {W + name for name in ('del', 'moveFrom', 'rPrChange', 'pPrChange')}
+    for parent in root.iter():
+        for child in list(parent):
+            if child.tag in removed:
+                parent.remove(child)
+    return root
+
+
 def extract_formatting(source: Path) -> dict:
     with ZipFile(source) as document:
-        root = ET.fromstring(document.read('word/document.xml'))
+        root = accepted_xml(document.read('word/document.xml'))
         numbering = ET.fromstring(document.read('word/numbering.xml'))
-        footnotes = ET.fromstring(document.read('word/footnotes.xml'))
+        footnotes = accepted_xml(document.read('word/footnotes.xml'))
     headers = {}
     for note in footnotes:
         text = ''.join(node.text or '' for node in note.findall('.//w:t', NS)).strip()
@@ -73,14 +90,43 @@ def extract_formatting(source: Path) -> dict:
 
 
 def serialize(data):
-    return '# Generated from the November 10 Word document; preserve paragraphs, lists, and screen footnotes.\n'+yaml.safe_dump(data,sort_keys=False,allow_unicode=True,width=100)
+    return '# Generated from Nov 14 later defenses, Nov 15 v3 defenses 1–5, and v4 shared/identity/wrong-party content.\n'+yaml.safe_dump(data,sort_keys=False,allow_unicode=True,width=100)
 
 
 def extract_prototype_formatting():
-    """Use the current approved document for all defense formatting."""
+    """Combine approved v4 shared/identity content, v3 defenses 1–5, and Nov 14 later defenses."""
     data = extract_formatting(SOURCE)
-    data['sol_source'] = data['source']
-    data['sol_source_sha256'] = data['source_sha256']
+    earlier = extract_formatting(SOL_SOURCE)
+    latest = extract_formatting(SHARED_SOURCE)
+
+    def at(document, heading):
+        return max(i for i, item in enumerate(document['paragraphs']) if item['text'] == heading)
+
+    sections = [
+        (latest, latest['paragraphs'][:at(latest, '1 Statute of Limitations')], 'v4:'),
+        (earlier, earlier['paragraphs'][at(earlier, '1 Statute of Limitations'):at(earlier, '6 Identity Theft')], 'v3:'),
+        (latest, latest['paragraphs'][at(latest, '6 Identity Theft'):at(latest, '8 Laches')], 'v4:'),
+    ]
+    old_end = at(data, '8 Laches')
+    obsolete = {key for item in data['paragraphs'][:old_end] for key in item.get('screen_footnotes', [])}
+    for key in obsolete:
+        data['screen_headers'].pop(key, None)
+    paragraphs = []
+    for document, items, prefix in sections:
+        for original in items:
+            item = {**original, 'source': document['source']}
+            if document is earlier and (78 <= item['source_index'] <= 93 or 249 <= item['source_index'] <= 262):
+                item['internal'] = True
+            if 'screen_footnotes' in item:
+                for reference in item['screen_footnotes']:
+                    data['screen_headers'][prefix + reference] = document['screen_headers'][reference]
+                item['screen_footnotes'] = [prefix + key for key in item['screen_footnotes']]
+            paragraphs.append(item)
+    data['paragraphs'][:old_end] = paragraphs
+    for key, document in [('sol_source', earlier), ('revision_source', earlier),
+                          ('shared_source', latest), ('identity_source', latest), ('wrong_party_source', latest)]:
+        data[key] = document['source']
+        data[key + '_sha256'] = document['source_sha256']
     return data
 
 
@@ -91,7 +137,7 @@ def main():
     content=serialize(extract_prototype_formatting())
     if args.check:
         if OUTPUT.read_text(encoding='utf-8') != content:
-            raise SystemExit('Guided formatting differs from the approved November 10 source. Regenerate it.')
+            raise SystemExit('Formatting differs from the approved Nov 14, Nov 15 v3, and v4 source sections. Regenerate it.')
     else:
         OUTPUT.write_text(content,encoding='utf-8')
 

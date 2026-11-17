@@ -41,13 +41,19 @@ def begin(defense, **kwargs):
 
 def test_screen_map_is_complete_and_headers_are_extracted_from_the_approved_word_document():
     source = ROOT / CONTENT['source']
-    assert source.name == '2026.11.10 Affirmative-Defense-Scripts.docx'
+    assert source.name == '2026.11.14 Affirmative-Defense-Scripts.docx'
     assert SCREEN_LAYOUT['source'] == CONTENT['source'] == SOURCE_FORMATTING['source']
     ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
     with ZipFile(source) as document:
         footnotes = ET.fromstring(document.read('word/footnotes.xml'))
     raw = {p.get('{'+ns['w']+'}id'): ''.join(t.text or '' for t in p.findall('.//w:t',ns)).strip().removeprefix('NEW SCREEN:').strip()
            for p in footnotes}
+    module=runpy.run_path(str(ROOT/'scripts/extract_script_formatting.py'))
+    revised=module['extract_formatting'](ROOT/CONTENT['revision_source'])
+    raw={key:value for key,value in raw.items() if int(key)>=37}
+    raw.update({'v3:'+key:value for key,value in revised['screen_headers'].items() if 1<=int(key)<=31})
+    latest=module['extract_formatting'](ROOT/CONTENT['shared_source'])
+    raw.update({'v4:'+key:value for key,value in latest['screen_headers'].items() if int(key)==0 or 32<=int(key)<=45})
     assert raw == SOURCE_FORMATTING['screen_headers']
     used = {SCREEN_LAYOUT['clarification_footnote'], *SCREEN_LAYOUT['excluded_footnotes']}
     for node, spec in SCREEN_LAYOUT['headers'].items():
@@ -55,7 +61,7 @@ def test_screen_map_is_complete_and_headers_are_extracted_from_the_approved_word
         used.add(spec['footnote'])
         used.update(v['footnote'] for v in spec.get('variants', []))
     assert used == set(raw)
-    assert set(SCREEN_LAYOUT['excluded_footnotes']) == {'42'}
+    assert not SCREEN_LAYOUT['excluded_footnotes']
     module=runpy.run_path(str(ROOT/'scripts/extract_script_formatting.py'))
     assert module['extract_prototype_formatting']() == SOURCE_FORMATTING
 
@@ -121,12 +127,10 @@ def test_mitigation_guidance_and_parent_have_separate_screens(consolidation,cont
     current=step(current,contact)
     assert current.current==('mitigation_second_no' if contact=='yes' else 'mitigation_second_checkbox')
     current=step(current,'continue' if contact=='yes' else 'yes')
-    assert current.current=='guided_failure_to_mitigate_parent'
-    assert current.page()['title']=='Main Failure to Mitigate checkbox'
-    assert current.page()['input_type']=='continue'
-    assert current.session.checkbox_selections['failure_to_mitigate']['main']==('include' if settlement=='yes' or contact=='no' else 'exclude')
-    current=step(current)
     assert current.current==DEFENSES['failure_to_mitigate']['summary']
+    assert current.page()['input_type']=='summary'
+    assert current.session.checkbox_selections['failure_to_mitigate']['main']==('include' if settlement=='yes' or contact=='no' else 'exclude')
+    assert ('main ‘Failure to Mitigate’ checkbox' in ' '.join(current.page()['body']))==(settlement=='yes' or contact=='no')
 
 
 @pytest.mark.parametrize('defense,values,parent', [
@@ -136,11 +140,10 @@ def test_mitigation_guidance_and_parent_have_separate_screens(consolidation,cont
 def test_other_derived_parent_checkboxes_get_source_information_screens(defense,values,parent):
     current=begin(defense)
     for value in values: current=step(current,value)
-    assert current.current==parent
+    assert current.current==DEFENSES[defense]['summary']
     assert 'main' not in [option['value'] for option in current.page().get('options',[])]
     assert current.session.checkbox_selections[defense]['main']=='include'
-    assert 'Check off the overall' in ' '.join(current.page()['body'])
-    current=step(current)
+    assert 'make sure to check off the main' in ' '.join(current.page()['body'])
     assert current.current==DEFENSES[defense]['summary']
 
 
@@ -173,7 +176,7 @@ def test_shared_clarification_uses_source_header_and_next_returns_to_question(de
 
 
 @pytest.mark.parametrize('path',['yes','no'])
-def test_full_traversal_reaches_all_seventeen_sections_and_final_review(path):
+def test_full_traversal_reaches_all_twenty_one_sections_and_final_review(path):
     current=start('statute_of_limitations',oral='yes')
     seen=set();visited=set()
     for _ in range(350):
@@ -184,13 +187,16 @@ def test_full_traversal_reaches_all_seventeen_sections_and_final_review(path):
         current=step(current,value)
     assert current.current==COMPLETE
     assert seen==set(DEFENSES)
-    assert len(current.page()['groups'])==17
+    assert len(current.page()['groups'])==21
     for defense, group in zip(DEFENSES, current.page()['groups'], strict=True):
         for row in group['rows'][1:]:
-            assert row['label'] == CONTENT['summary_labels'][defense][row['id']]
+            ordinal=CONTENT['checkbox_ordinals'].get(defense,{}).get(row['id'])
+            expected=CONTENT['summary_labels'][defense][row['id']]
+            assert row['label'] == (f'({ordinal}) '+expected if ordinal else expected)
             assert row['detail'] == 'Nested checkbox'
     if path=='yes':
-        assert {'guided_capacity_opening','guided_oral_modification_change',*PARENT_SCREENS} <= visited
+        assert {'guided_capacity_opening','guided_oral_modification_change'} <= visited
+        assert not (set(PARENT_SCREENS) & visited)
     assert not {'failure_to_mitigate_decision','common_counts_decision','excuse_breach_decision',
                 'mitigation_contact_uncertain','mitigation_settlement_uncertain'} & visited
 

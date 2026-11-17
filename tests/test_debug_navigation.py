@@ -113,7 +113,7 @@ def test_normal_mode_rejects_debug_jumps_and_debug_anchors(tmp_path):
 
 def test_invalid_section_and_draft_are_rejected(debug_client):
     client,_=debug_client
-    assert client.post('/api/debug/jump',json={'section':'identity_theft'}).status_code == 422
+    assert client.post('/api/debug/jump',json={'section':'not_a_defense'}).status_code == 422
     assert client.post('/api/debug/jump',json={'section':'nonsense'}).status_code == 422
 
 

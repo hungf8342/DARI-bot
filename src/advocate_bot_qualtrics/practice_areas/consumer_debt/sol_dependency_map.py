@@ -2,7 +2,7 @@
 
 Rules and dependency edges live in sol_checkbox_dependencies.yaml. Evaluation
 short-circuits irrelevant facts: debt buyers do not depend on payment timing,
-and an ineligible path does not need the oral-agreement answer.
+and declining the main defense does not need the oral-agreement answer.
 """
 from __future__ import annotations
 
@@ -54,7 +54,7 @@ def affected_checkboxes(field_or_question: str) -> list[str]:
     for key, box in data["checkboxes"].items():
         facts = _rule_facts(data, {"rule": box["rule"]})
         dependencies = {value for fact in facts for value in [*data["facts"][fact]["fields"], *data["facts"][fact]["questions"]]}
-        if field_or_question in dependencies or field_or_question == box["question"]:
+        if field_or_question in dependencies or field_or_question in [box["question"], *box.get("alternate_questions", [])]:
             affected.append(key)
     return affected
 
@@ -73,10 +73,13 @@ def plan_checkbox_review(
             return evaluate(data["rules"][expression["rule"]])
         if "fact" in expression:
             name = expression["fact"]
-            used_facts.append(name)
-            value = facts.get(name)
+            if name != "main_selection":
+                used_facts.append(name)
+            value = choices.get("main") if name == "main_selection" else facts.get(name)
+            if name == "main_selection" and value not in {"yes", "no"}:
+                value = None
             if value is None:
-                return None, [fact_questions[name]]
+                return None, [fact_questions.get(name, data["facts"][name]["questions"][0])]
             return (value == expression["equals"] if "equals" in expression else value in expression["one_of"]), []
         if "all" in expression:
             for child in expression["all"]:
@@ -99,7 +102,8 @@ def plan_checkbox_review(
         availability[key] = available
         required.extend(questions)
         if available and choices.get(key) not in {"yes", "no"}:
-            required.append(box["question"])
+            question = "sol_written" if key == "second" and facts.get("oral_agreement") == "no" else box["question"]
+            required.append(question)
     return SolDependencyPlan(affected_boxes=affected_checkboxes(changed_field) if changed_field else [],
                              availability=availability, required_questions=list(dict.fromkeys(required)),
                              used_facts=list(dict.fromkeys(used_facts)))

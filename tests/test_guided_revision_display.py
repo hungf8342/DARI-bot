@@ -10,6 +10,8 @@ from test_clickthrough_workflow import (
 def test_sol_edit_does_not_add_previous_status_to_first_reviews_of_later_defenses():
     current = change(completed_history(), 'guided_payment_date', '2026-07-01')
     current = advance_updated(current, 'yes')
+    assert current.current == 'statute_of_limitations_decision'
+    current = advance_updated(current, 'no')
     assert current.current == SUMMARY
     assert current.page()['changes']  # The completed SOL review is a valid baseline.
     seen = set()
@@ -24,7 +26,7 @@ def test_sol_edit_does_not_add_previous_status_to_first_reviews_of_later_defense
         if current.current == COMPLETE:
             break
     assert current.current == COMPLETE
-    assert len(seen) == 16
+    assert len(seen) == 20
     page = current.page()
     assert any('previous_status' in row for row in page['rows'] if row['defense_id'] == DEFENSE)
     assert all('previous_status' not in row for row in page['rows'] if row['defense_id'] != DEFENSE)
@@ -34,18 +36,20 @@ def test_unanswered_checkbox_is_not_a_previous_no_offer_result():
     history = intake() + answers(('sol_payment_estimate_agree', 'yes'))
     current = change(history, 'guided_payment_date', '2026-07-01')
     current = advance_updated(current, 'yes')
+    assert current.current == 'statute_of_limitations_decision'
+    current = advance_updated(current, 'no')
     assert current.current == SUMMARY
     assert current.page()['changes'] == []
     assert 'revision_notice' not in current.page()
     assert all('previous_status' not in row for row in current.page()['rows'])
 
 
-def test_real_previous_no_offer_result_is_still_compared_when_box_becomes_available():
+def test_previous_written_contract_decline_is_compared_with_the_new_oral_choice():
     current = change(completed_history(), 'guided_oral', 'yes')
     assert current.current == 'sol_checkbox_second'
     current = advance_updated(current, 'yes')
     second = next(row for row in current.page()['rows'] if row['id'] == 'second')
-    assert second['previous_status'] == 'Not offered on this path'
+    assert second['previous_status'] == 'Not selected'
     assert current.page()['changes'] == [{
-        'label': 'California oral contracts', 'before': 'Not offered on this path', 'after': 'Selected',
+        'label': '(2) California oral contracts', 'before': 'Not selected', 'after': 'Selected',
     }]

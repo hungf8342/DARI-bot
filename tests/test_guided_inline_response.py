@@ -81,9 +81,7 @@ def test_parent_outcome_has_its_own_screen_and_summary_keeps_the_checklist():
     response = current.page()['answer_responses']['yes']
     assert response == []
     following = advance_updated(current, 'yes')
-    assert following.current == 'guided_excuse_breach_parent'
-    assert 'Check off the overall' in ' '.join(following.page()['body'])
-    following = advance_updated(following, 'continue')
+    assert 'main ‘Excuse or Breach of Contract’ checkbox' in ' '.join(following.page()['body'])
     assert following.current == DEFENSES['excuse_breach']['summary']
     assert all(text not in following.page()['body'] for text in response)
     assert next(row for row in following.page()['rows'] if row['id'] == 'main')['checked']
@@ -152,7 +150,7 @@ def test_dynamic_language_preview_is_validated_and_never_changes_research_record
 
 
 @pytest.mark.parametrize('path', ['yes','no'])
-def test_all_seventeen_sections_support_pure_previews_and_complete(path):
+def test_all_twenty_one_sections_support_pure_previews_and_complete(path):
     current = review(intake('buyer', oral='yes'))
     seen = set()
     for _ in range(300):
@@ -173,7 +171,7 @@ def test_all_seventeen_sections_support_pure_previews_and_complete(path):
         current = advance_updated(current, value)
     assert current.current == COMPLETE
     assert seen == set(DEFENSES)
-    assert len(current.page()['groups']) == 17
+    assert len(current.page()['groups']) == 21
 
 
 @pytest.mark.parametrize('defense', ['unconscionable_contract'])
@@ -231,12 +229,12 @@ def test_sol_main_checkbox_shares_page_with_its_complete_lead_in(creditor):
     body = ' '.join(page['body'])
     if creditor == 'original':
         assert 'You agree with the complaint' not in body
-        assert 'Consider raising this defense' in body
+        assert 'People in this situation often raise this defense' in body
         assert 'You said your last payment was on or before 2025-09-20' in body
     else:
         assert 'Debt buyers often sue on older accounts' in body
         assert 'You are being sued by a debt buyer' in body
-    assert page['title'] == 'Do you want to check off the Statute of Limitations checkbox?'
+    assert page['title'] == ('Do you want to raise a Statute of Limitations defense?' if creditor == 'original' else 'Do you want to check off the Statute of Limitations checkbox?')
     assert page['input_type'] == 'choice'
 
 
@@ -248,22 +246,22 @@ def test_sol_personal_timing_lead_in_is_on_main_checkbox_page(timing):
     assert 'Consider raising this defense' not in ' '.join(current.page()['answer_responses'][timing])
     current = advance_updated(current, timing)
     assert current.current == 'statute_of_limitations_decision'
-    assert 'Consider raising this defense' in ' '.join(current.page()['body'])
-    assert ('You said your last payment was on or before 2025-09-20.' if timing == 'no' else 'You’re not sure whether your last payment') not in ' '.join(current.page()['body'])
+    assert 'People in this situation often raise this defense' in ' '.join(current.page()['body'])
+    assert ('You said your last payment was on or before 2025-09-20' if timing == 'no' else 'You’re not sure whether your last payment') in ' '.join(current.page()['body'])
 
 
-@pytest.mark.parametrize('main,group', [('yes','yes'), ('no','no')])
+@pytest.mark.parametrize('main,group', [('yes','yes'), ('yes','no')])
 def test_sol_nested_checkbox_questions_keep_their_guidance(main, group):
     current = review(intake('buyer', oral='yes'))
     current = advance_updated(current, main)
     assert current.current == 'sol_checkboxes_first_third'
-    assert 'first and third indented checkboxes' in ' '.join(current.page()['body'])
+    assert 'both California and Delaware written contracts' in ' '.join(current.page()['body'])
     assert current.page()['answer_responses'][group] == []
     current = advance_updated(current, group)
     assert current.current == 'sol_checkbox_second'
     assert 'Oral contracts have shorter statute of limitations' in ' '.join(current.page()['body'])
     assert 'contract with Original Example Bank was oral' in ' '.join(current.page()['body'])
-    assert current.page()['title'].startswith('Do you want to check off the second indented')
+    assert current.page()['title'] == 'Do you want to raise a Statute of Limitations defense for oral contracts?'
 
 
 @pytest.mark.parametrize('checkbox,lead_in,choices', [
@@ -294,7 +292,7 @@ def test_sol_66_month_acknowledgment_is_inline_while_consider_guidance_stays_wit
     following = advance_updated(current,'yes')
     assert following.current == 'statute_of_limitations_decision'
     body = following.page()['body']
-    assert body[0].startswith('Consider raising this defense')
+    assert body[0].startswith('This defense may apply')
     assert '66.5' not in ' '.join(body)
     # Replaying Back restores the same inline acknowledgment for the saved choice.
     back = review(following.history[:-1])
@@ -319,9 +317,9 @@ def test_sol_first_third_selection_keeps_later_instruction_blocks_on_next_screen
         following = advance_updated(following,'yes')
     else:
         assert following.current == 'sol_written'
-        assert following.page()['title'] == 'The second indented Statute of Limitations checkbox'
-        assert 'second indented checkbox does not apply' in ' '.join(following.page()['body'])
-        following = advance_updated(following, 'continue')
+        assert following.page()['title'] == 'Statute of Limitations defense for oral contracts'
+        assert 'defense for oral contracts does not apply' in ' '.join(following.page()['body'])
+        following = advance_updated(following, 'no')
     assert following.current == DEFENSES['statute_of_limitations']['summary']
     assert 'Based on your answers to this defense section' in ' '.join(following.page()['body'])
     assert following.page()['rows']

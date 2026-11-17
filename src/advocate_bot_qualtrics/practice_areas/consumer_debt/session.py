@@ -71,12 +71,13 @@ def apply_interactive_branch(
     *,
     submitted_date: date | None = None,
     submitted_text: str | None = None,
+    tree=None,
 ) -> None:
     """Update session flags and collected dates after a user answers a node."""
     session.defense_answers[node_id] = branch_id
     from advocate_bot_qualtrics.practice_areas.consumer_debt.base_tree import BASE_TREE_DEFINITION
 
-    definition = BASE_TREE_DEFINITION.node_map.get(node_id)
+    definition = (tree or BASE_TREE_DEFINITION).node_map.get(node_id)
     if definition is not None:
         if definition.fact_key and branch_id != "unknown":
             session.script_facts[definition.fact_key] = branch_id

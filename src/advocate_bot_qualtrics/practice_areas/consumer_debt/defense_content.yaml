@@ -1,6 +1,6 @@
-# November 10 approved wording and prototype-only routing overrides.
-source: docs/source-material/2026.11.10/2026.11.10 Affirmative-Defense-Scripts.docx
-sol_source: docs/source-material/2026.11.10/2026.11.10 Affirmative-Defense-Scripts.docx
+# Nov 14 defenses 8–21; Nov 15 v3 defenses 1–5; v4 shared steps, Identity Theft and Wrong Party.
+source: docs/source-material/2026-11.14/2026.11.14 Affirmative-Defense-Scripts.docx
+sol_source: docs/source-material/2026-11-15/2026.11.15 Affirmative-Defense-Scripts-v3.docx
 shared_clarification: Ask a clarifying question with the “Ask a Question” button or speak with clinic
   staff before choosing an answer. Then click the “Next” button to choose your answer.
 overview:
@@ -17,14 +17,14 @@ nodes:
       'no': mitigation_settlement
   statute_of_limitations_intro:
     explanation: 'Statute of limitations is a rule that says if [PLAINTIFF] waits too long, they cannot
-      sue you. The maximum length of time they can wait varies depending on which state’s law applies. Statute
-      of limitations is a strong defense if it applies.
+      sue you. The maximum length of time they can wait varies depending on which state’s law applies.
+      Statute of limitations is a strong defense if it applies.
 
-      Even if [PLAINTIFF] sued within the time limit, it may still need to prove when you last paid.  Consider
-      raising this defense in an answer if [PLAINTIFF] filed their complaint one year or more after your
-      last payment.'
+
+      Consider raising this defense in an answer if [PLAINTIFF] filed their complaint one year or more
+      after your last payment.'
   sol_payment_estimate_agree:
-    question: 'Do you agree with the last payment date alleged in the complaint?
+    question: 'Do you agree that your last payment date was [LAST.PAYMENT.DATE]?
 
 
       The complaint lists your last payment as [LAST.PAYMENT.DATE], about [months between that payment
@@ -41,58 +41,122 @@ nodes:
   sol_age_unknown:
     question: You’re not sure whether your last payment was after [COMPLAINT.DATE - 1 year].
   sol_original_preserve:
-    question: 'Consider raising this defense if your last payment was a year or more before [PLAINTIFF]
-      filed their complaint.
+    question: 'This defense may apply if your last payment was a year or more before [PLAINTIFF] filed
+      their complaint.
+
 
       You said your last payment was on or before [COMPLAINT.DATE - 1 year]—a year or more before [PLAINTIFF]
-      filed their complaint.'
+      filed their complaint.
+
+
+      People in this situation often raise this defense.'
+    question_variants:
+    - fact_key: rule:sol_timing_explicitly_uncertain
+      equals: 'yes'
+      text: 'This defense may apply if your last payment was a year or more before [PLAINTIFF] filed their
+        complaint.
+
+
+        You’re not sure whether your last payment was after [COMPLAINT.DATE - 1 year].
+
+
+        People in this situation often raise this defense.'
   statute_of_limitations_decision:
-    question: Do you want to check off the Statute of Limitations checkbox?
+    question: Do you want to raise a Statute of Limitations defense?
+    routes:
+      'yes': sol_guidance
+      'no': statute_of_limitations_confirm
   sol_finish:
-    question: This defense does not apply if you’re certain your last payment to [PLAINTIFF] was after
-      [COMPLAINT.DATE - 1 year]—less than one year before [PLAINTIFF] filed the complaint.
+    question: 'This defense does not apply if you’re certain your last payment to [PLAINTIFF] was within
+      a year of [PLAINTIFF] filing the complaint.
+
+
+      You said your last payment was after [COMPLAINT.DATE - 1 year]—within a year of [PLAINTIFF] filing
+      the complaint.
+
+
+      People in this situation often skip this defense.'
+    action: script_say:statute_of_limitations:sol_finish
+    next: statute_of_limitations_decision
   sol_guidance:
     question: 'The statute of limitations periods differ depending on which state rule applies.
 
-      People in this situation often check off the first and third indented checkboxes under “Statute
-      of Limitations” in case California or Delaware law applies to their contracts.'
+
+      People in this situation often raise this defense for both California and Delaware written contracts
+      in case California or Delaware law applies.'
   sol_checkbox_second:
     question: 'Oral contracts have shorter statute of limitations.
 
-      You’ve indicated your contract with [ORIGINAL.CREDITOR] was oral.
 
-      People in this situation often check off the second indented checkbox under “Statute of Limitations.”
+      You said your contract with [ORIGINAL.CREDITOR] was oral.
 
 
-      Do you want to check off the second indented Statute of Limitations checkbox?'
+      People in this situation often raise this defense specifically for oral contracts.
+
+
+      Do you want to raise a Statute of Limitations defense for oral contracts?'
   sol_written:
-    question: 'You previously indicated your contract with [ORIGINAL.CREDITOR] was in writing.
+    question: 'The “Statute of Limitations” defense for oral contracts does not apply if your credit agreement
+      with [ORIGINAL.CREDITOR] was in writing.
 
-      The defense under the second indented checkbox does not apply.'
+
+      You said your contract with [ORIGINAL.CREDITOR] was in writing.
+
+
+      People in this situation often skip this defense, which is specifically for oral contracts.
+
+
+      Do you want to raise a Statute of Limitations defense for oral contracts?'
+    kind: choice
+    action: null
+    next: null
+    discussion_mode: decision
+    checkbox:
+      defense_id: statute_of_limitations
+      checkbox_id: second
+      label: California oral contracts
+    branches:
+    - id: 'yes'
+      label: Yes.
+      target: statute_of_limitations_confirm
+    - id: 'no'
+      label: No.
+      target: statute_of_limitations_confirm
+    - id: unknown
+      label: Not sure.
+      target: sol_written_unresolved
   ambiguity_intro:
-    explanation: 'Ambiguity means something is unclear. For example, ambiguity may apply if you are at all
-      confused about:
+    explanation: 'Ambiguity means something is unclear. For example, Ambiguity may apply if you are confused
+      about:
+
 
       the complaint; or
 
+
       the amount of money you are being sued for
 
-      The documents filed with the court may also be ambiguous because they do not contain your entire account
-      history or contract. This means you may need to ask for more information from [PLAINTIFF] later through
-      a process called discovery.
 
-      Many people check off ambiguity, since it is a broad defense.'
+      Ambiguity may also apply if [PLAINTIFF] filed documents with the court that do not contain your
+      entire account history or contract.
+
+
+      Many people check off Ambiguity, since it is a broad defense.'
   mistake_intro:
-    explanation: 'Mistake may apply if there was any error made at any point while the account was open
-      or after it was closed. This includes:
+    explanation: 'Mistake may apply if there was any error made while the account was open or after it
+      was closed. This includes:
+
 
       incorrect late fees or interest;
 
+
       failing to account for payments you made on the account;
+
 
       asking for more money in the lawsuit than is actually owed; or
 
+
       anything that makes you confused about the amount you are being sued for
+
 
       Many litigants check off Mistake, since it is a broad defense.'
   laches_intro:
@@ -120,8 +184,8 @@ nodes:
     question: "You did not report difficulty accessing your account records.\n Laches does not apply if\
       \ you did not experience difficulty in finding account information."
   fraud_intro:
-    explanation: 'Fraud, misrepresentation, and concealment involve being misled about important facts related
-      to the terms of the contract.
+    explanation: 'Fraud, misrepresentation, and concealment involve being misled about important facts
+      related to the terms of the contract.
 
       For example, the credit card company may have misled you about interest rates, fees, or penalties.
       You may have then agreed to the account or made payments based on that false information.
@@ -139,8 +203,8 @@ nodes:
     question_variants:
     - fact_key: field:CONSOLIDATION
       equals: 'yes'
-      text: Did the plaintiff try to call or email you or the debt consolidation company to negotiate before
-        suing?
+      text: Did the plaintiff try to call or email you or the debt consolidation company to negotiate
+        before suing?
     routes:
       'yes': mitigation_contact_pending
       'no': mitigation_contact_pending
@@ -191,17 +255,17 @@ nodes:
     question: "You said that [PLAINTIFF] attempted to arrange payments or negotiate before suing. \nThe\
       \ “Failure to Mitigate” defense does not apply."
   mitigation_first_checkbox:
-    question: "You said that [PLAINTIFF] sued after declining a settlement offer you made. The defense in\
-      \ the first indented checkbox may apply.  \nMany people in similar situations check this box to keep\
-      \ the option of using this defense later.\n\nDo you want to check off the first indented Failure to\
-      \ Mitigate checkbox?"
+    question: "You said that [PLAINTIFF] sued after declining a settlement offer you made. The defense\
+      \ in the first indented checkbox may apply.  \nMany people in similar situations check this box\
+      \ to keep the option of using this defense later.\n\nDo you want to check off the first indented\
+      \ Failure to Mitigate checkbox?"
     question_variants:
     - fact_key: field:CONSOLIDATION
       equals: 'yes'
-      text: "You said that [PLAINTIFF] sued after declining a settlement offer made by you or the debt consolidation\
-        \ company. The defense in the first indented checkbox may apply. \nMany people in similar situations\
-        \ check this box to keep the option of using this defense later.\n\nDo you want to check off the\
-        \ first indented Failure to Mitigate checkbox?"
+      text: "You said that [PLAINTIFF] sued after declining a settlement offer made by you or the debt\
+        \ consolidation company. The defense in the first indented checkbox may apply. \nMany people in\
+        \ similar situations check this box to keep the option of using this defense later.\n\nDo you\
+        \ want to check off the first indented Failure to Mitigate checkbox?"
     routes:
       'yes': mitigation_contact
       'no': mitigation_contact
@@ -329,10 +393,12 @@ nodes:
         \ company to close the account before you stopped making payments. \nMany people in this situation\
         \ check this box to keep the option of using this defense later.\n\nDo you want to check off Rescission?"
   lack_of_consideration_intro:
-    explanation: Consideration is something of value exchanged in a contract. For a credit account, this
-      may include the creditor providing credit in exchange for a promise to repay. Lack of consideration
-      means you didn’t get any benefit from the creditor. The questions below ask about identity theft
-      and whether you or someone you opened the account for actually used the account.
+    explanation: Consideration is when you receive something of value as part of a  contract. For a credit
+      card account, the “bargain” between the company and the consumer is that the consumer can use the
+      credit card to buy things  in exchange for paying the credit card company back on a regular basis.
+      . Lack of consideration means you didn’t get any benefit from the creditor card because you did
+      not actually use or receive the things purchased. The questions below ask about identity theft and
+      whether you or someone you opened the account for actually used the account.
   consideration_identity:
     question: 'Earlier, you said that someone may have stolen your identity to create this debt.
 
@@ -466,8 +532,8 @@ nodes:
 
       Clinic staff can help you discuss what information may be relevant.'
   waiver_intro:
-    explanation: 'Waiver is a defense that may apply if the original creditor allowed you to change a term
-      of the agreement while the account was still open, such as:
+    explanation: 'Waiver is a defense that may apply if the original creditor allowed you to change a
+      term of the agreement while the account was still open, such as:
 
       pay late without charging late fees; or
 
@@ -658,8 +724,8 @@ nodes:
     question_variants:
     - fact_key: field:CONSOLIDATION
       equals: 'yes'
-      text: Did the plaintiff try to call or email you or the debt consolidation company to negotiate before
-        suing?
+      text: Did the plaintiff try to call or email you or the debt consolidation company to negotiate
+        before suing?
   common_counts_none:
     question: 'You said there are no issues under Common Counts with the amount or account being sued
       over.
@@ -715,12 +781,579 @@ nodes:
   mitigation_consolidated:
     question: ''
     next: mitigation_settlement
+  standing_privity_intro:
+    explanation: To sue for your debt, [PLAINTIFF] must provide proof that they have a contract/agreement
+      with you.
+    next: standing_creditor_type
+    fact_restatements: []
+  failure_to_state_cause_intro:
+    explanation: To sue for your debt, [PLAINTIFF] must follow certain requirements by stating specific
+      information in its complaint about the account.
+    next: cause_creditor_type
+    fact_restatements: []
+  identity_theft_intro:
+    explanation: 'Identity theft happens when someone uses your personal information without your permission
+      to:
+
+
+      open an account
+
+
+      buy things
+
+
+      receive services; or
+
+
+      take money or property.
+
+
+      This defense may apply if [PLAINTIFF] is trying to collect a debt that another person created without
+      your permission. For example, someone may have used your personal information to open a credit card
+      that you never applied for.'
+    next: identity_stolen_card
+  wrong_party_intro:
+    explanation: Wrong party means [PLAINTIFF] is suing you for a debt that someone else is legally responsible
+      for. For example, you may have been confused with someone who has a similar name. Another example
+      is being sued for a credit card someone else is responsible for, even if they allowed you to use
+      that card. If you signed an agreement with another person to open a joint account, you may be responsible.
+    next: wrong_party_identity_choice_gate
+  standing_creditor_type:
+    kind: condition
+    title: Standing and Privity
+    question: ''
+    discussion_topic: Standing and Privity
+    discussion_mode: screening
+    condition_key: field:PLAINTIFF
+    branches:
+    - id: buyer
+      label: buyer
+      target: standing_first_gate
+    - id: original
+      label: original
+      target: standing_original_choice
+    - id: unknown
+      label: unknown
+      target: standing_creditor_type_resolve
+  standing_first_gate:
+    kind: condition
+    title: Standing and Privity
+    question: ''
+    discussion_topic: Standing and Privity
+    discussion_mode: screening
+    condition_key: complaint:OWNERSHIP
+    branches:
+    - id: 'yes'
+      label: 'yes'
+      target: standing_first
+    - id: 'no'
+      label: 'no'
+      target: standing_first
+    - id: unknown
+      label: unknown
+      target: standing_first_gate_resolve
+  standing_first:
+    kind: choice
+    question: 'This argument may apply if [PLAINTIFF] did not state it is the legal owner of the debt
+      or it has the right to collect.
+
+
+      In the complaint, [PLAINTIFF] failed to state it is the legal owner of the debt and has the right
+      to bring a case to collect debt.
+
+
+      Many people in this situation raise this argument.
+
+
+      Do you want to argue that [PLAINTIFF] failed to claim ownership?'
+    title: Standing and Privity
+    discussion_topic: Standing and Privity
+    discussion_mode: decision
+    branches:
+    - id: 'yes'
+      label: Yes.
+      target: standing_second_buyer
+    - id: 'no'
+      label: No.
+      target: standing_second_buyer
+    - id: unknown
+      label: Not sure.
+      target: standing_first_nov14_unknown
+    checkbox:
+      defense_id: standing_privity
+      checkbox_id: first
+      label: Ownership statement missing
+    checkboxes: []
+    fact_key: null
+    validation: null
+    question_variants:
+    - fact_key: complaint:OWNERSHIP
+      equals: 'yes'
+      text: 'This argument will not work if the plaintiff stated it is the legal owner of the debt and
+        has the right to collect.
+
+
+        In the complaint, [PLAINTIFF] stated it is the legal owner of the debt and has the right to collect.
+
+
+        Many people in this situation skip this argument.
+
+
+        Do you want to argue that [PLAINTIFF] failed to claim ownership?'
+  standing_second_buyer:
+    kind: choice
+    question: 'This argument may apply if a debt buyer is suing you. Debt buyers often have difficulty
+      producing paperwork that proves they a) are the legal owner; and b) you are required to pay them.
+
+
+      The plaintiff suing you, [PLAINTIFF], is a debt buyer.
+
+
+      Many people in this situation raise this argument.
+
+
+      Do you want to argue that [PLAINTIFF] failed to provide proof of ownership?'
+    title: Standing and Privity
+    discussion_topic: Standing and Privity
+    discussion_mode: decision
+    branches:
+    - id: 'yes'
+      label: Yes.
+      target: standing_privity_confirm
+    - id: 'no'
+      label: No.
+      target: standing_privity_confirm
+    - id: unknown
+      label: Not sure.
+      target: standing_second_buyer_nov14_unknown
+    checkbox:
+      defense_id: standing_privity
+      checkbox_id: second
+      label: Proof of legal ownership and obligation to pay
+    checkboxes: []
+    fact_key: null
+    validation: null
+  cause_buyer_explanation:
+    kind: action
+    title: Failure to State a Cause of Action
+    question: 'Debt buyers must include the following in their complaint:
+
+
+      the original creditor name
+
+
+      statement that they own the debt
+
+
+      date you opened the account
+
+
+      your breach date or last payment date
+
+
+      Debt buyers must attach their debt transfer contract with [ORIGINAL.CREDITOR] or another company,
+      or provide a final account statement with a charge-off date from [ORIGINAL.CREDITOR].'
+    discussion_topic: Failure to State a Cause of Action
+    discussion_mode: screening
+    action: script_say:failure_to_state_cause:cause_buyer_explanation
+    next: cause_suit_type
+  cause_original_explanation:
+    kind: action
+    title: Failure to State a Cause of Action
+    question: 'Original creditors must include the following in their complaint:
+
+
+      date you opened the account
+
+
+      your breach date or last payment date.
+
+
+      Original creditors must attach a credit card agreement that you agreed to, or provide a final account
+      statement.'
+    discussion_topic: Failure to State a Cause of Action
+    discussion_mode: screening
+    action: script_say:failure_to_state_cause:cause_original_explanation
+    next: cause_suit_type
+  cause_suit_type:
+    kind: condition
+    title: Failure to State a Cause of Action
+    question: ''
+    discussion_topic: Failure to State a Cause of Action
+    discussion_mode: screening
+    condition_key: field:SUIT-TYPE
+    branches:
+    - id: breach
+      label: breach
+      target: cause_breach_type
+    - id: both
+      label: both
+      target: cause_breach_type
+    - id: common
+      label: common
+      target: cause_common_start
+    - id: unknown
+      label: unknown
+      target: cause_suit_type_resolve
+  cause_breach_first:
+    kind: choice
+    question: 'This argument may apply if the debt buyer did not identify the original creditor in the
+      complaint.
+
+
+      [PLAINTIFF] did not identify your original creditor in the complaint.
+
+
+      Many people in this situation raise this argument.
+
+
+      Do you want to argue that [PLAINTIFF] failed to identify the original creditor?'
+    title: Failure to State a Cause of Action
+    discussion_topic: Failure to State a Cause of Action
+    discussion_mode: decision
+    branches:
+    - id: 'yes'
+      label: Yes.
+      target: cause_breach_owner_gate
+    - id: 'no'
+      label: No.
+      target: cause_breach_owner_gate
+    - id: unknown
+      label: Not sure.
+      target: cause_breach_first_nov14_unknown
+    checkbox:
+      defense_id: failure_to_state_cause
+      checkbox_id: breach_first
+      label: 'Breach: original creditor not identified'
+    checkboxes: []
+    fact_key: null
+    validation: null
+    question_variants:
+    - fact_key: complaint:ORIGINAL.CREDITOR
+      equals: 'yes'
+      text: 'This argument does not apply if the debt buyer identified the original creditor in the complaint.
+
+
+        [PLAINTIFF] identified your original creditor in the complaint.
+
+
+        Many people in this situation skip this argument.
+
+
+        Do you want to argue that [PLAINTIFF] failed to identify the original creditor?'
+  cause_breach_second_buyer:
+    kind: choice
+    question: 'This argument may apply if the debt buyer did not state it legally owns the debt and has
+      the right to sue on it in the complaint.
+
+
+      [PLAINTIFF] did not state it legally owns the debt and has the right to sue in the complaint.
+
+
+      Many people in this situation raise this argument.
+
+
+      Do you want to argue that [PLAINTIFF] failed to claim ownership?'
+    title: Failure to State a Cause of Action
+    discussion_topic: Failure to State a Cause of Action
+    discussion_mode: decision
+    branches:
+    - id: 'yes'
+      label: Yes.
+      target: cause_breach_open_gate
+    - id: 'no'
+      label: No.
+      target: cause_breach_open_gate
+    - id: unknown
+      label: Not sure.
+      target: cause_breach_second_buyer_nov14_unknown
+    checkbox:
+      defense_id: failure_to_state_cause
+      checkbox_id: breach_second
+      label: 'Breach: ownership allegation missing'
+    checkboxes: []
+    fact_key: null
+    validation: null
+    question_variants:
+    - fact_key: complaint:OWNERSHIP
+      equals: 'yes'
+      text: 'This argument does not apply if the debt buyer stated it legally owns the debt and has the
+        right to sue on it in the complaint.
+
+
+        [PLAINTIFF] stated it legally owns the debt and has the right to sue in the complaint.
+
+
+        Many people in this situation skip this argument.
+
+
+        Do you want to argue that [PLAINTIFF] failed to claim ownership?'
+  cause_breach_attachment_checkbox:
+    kind: choice
+    question: 'This argument may apply if the debt buyer did not appear to attach either (1) a statement
+      from the original creditor or (2) a contract showing they bought the debt.
+
+
+      [PLAINTIFF] did not appear to attach either a statement from [ORIGINAL.CREDITOR] or a contract showing
+      they bought the debt.
+
+
+      Many people in this situation raise this argument and write in “no proof of plaintiff ownership.
+
+
+      Do you want to argue that [PLAINTIFF] failed to provide proof of ownership?'
+    title: Failure to State a Cause of Action
+    discussion_topic: Failure to State a Cause of Action
+    discussion_mode: decision
+    branches:
+    - id: 'yes'
+      label: Yes.
+      target: cause_breach_parent_result
+    - id: 'no'
+      label: No.
+      target: cause_breach_parent_result
+    - id: unknown
+      label: Not sure.
+      target: cause_breach_attachment_checkbox_nov14_unknown
+    checkbox:
+      defense_id: failure_to_state_cause
+      checkbox_id: breach_fifth
+      label: 'Breach: no proof of plaintiff ownership'
+    checkboxes: []
+    fact_key: null
+    validation: null
+  cause_after_breach:
+    kind: condition
+    title: Failure to State a Cause of Action
+    question: ''
+    discussion_topic: Failure to State a Cause of Action
+    discussion_mode: screening
+    condition_key: field:SUIT-TYPE
+    branches:
+    - id: breach
+      label: breach
+      target: failure_to_state_cause_confirm
+    - id: both
+      label: both
+      target: cause_common_start
+    - id: common
+      label: common
+      target: cause_common_start
+    - id: unknown
+      label: unknown
+      target: cause_suit_type_resolve
+  cause_common_start:
+    kind: condition
+    title: Failure to State a Cause of Action
+    question: ''
+    discussion_topic: Failure to State a Cause of Action
+    discussion_mode: screening
+    condition_key: field:PLAINTIFF
+    branches:
+    - id: buyer
+      label: buyer
+      target: cause_common_name_gate
+    - id: original
+      label: original
+      target: cause_recent_debt_gate
+    - id: unknown
+      label: unknown
+      target: cause_creditor_type_resolve
+  cause_common_first:
+    kind: choice
+    question: 'This argument may apply if the debt buyer did not identify the original creditor in the
+      complaint.
+
+
+      [PLAINTIFF] did not identify the original creditor in the complaint.
+
+
+      Many people in this situation raise this argument.
+
+
+      Do you want to argue that [PLAINTIFF] failed to identify the original creditor?'
+    title: Failure to State a Cause of Action
+    discussion_topic: Failure to State a Cause of Action
+    discussion_mode: decision
+    branches:
+    - id: 'yes'
+      label: Yes.
+      target: cause_common_owner_gate
+    - id: 'no'
+      label: No.
+      target: cause_common_owner_gate
+    - id: unknown
+      label: Not sure.
+      target: cause_common_first_nov14_unknown
+    checkbox:
+      defense_id: failure_to_state_cause
+      checkbox_id: common_first
+      label: 'Common Counts: original creditor not identified'
+    checkboxes: []
+    fact_key: null
+    validation: null
+    question_variants:
+    - fact_key: complaint:ORIGINAL.CREDITOR
+      equals: 'yes'
+      text: 'This argument does not apply if the debt buyer identified the original creditor in the complaint.
+
+
+        [PLAINTIFF] identified the original creditor, [ORIGINAL.CREDITOR], in the complaint.
+
+
+        Many people in this situation skip this argument.
+
+
+        Do you want to argue that [PLAINTIFF] failed to identify the original creditor?'
+  cause_common_second_buyer:
+    kind: choice
+    question: 'This argument may apply if the debt buyer did not say in the complaint that it legally
+      owns the debt and has the right to sue on it.
+
+
+      [PLAINTIFF] did not say in the complaint that it legally owns the debt and has the right to sue.
+
+
+      Many people in this situation raise this argument.
+
+
+      Do you want to argue that [PLAINTIFF] failed to claim ownership?'
+    title: Failure to State a Cause of Action
+    discussion_topic: Failure to State a Cause of Action
+    discussion_mode: decision
+    branches:
+    - id: 'yes'
+      label: Yes.
+      target: cause_common_attachment_gate
+    - id: 'no'
+      label: No.
+      target: cause_common_attachment_gate
+    - id: unknown
+      label: Not sure.
+      target: cause_common_second_buyer_nov14_unknown
+    checkbox:
+      defense_id: failure_to_state_cause
+      checkbox_id: common_second
+      label: 'Common Counts: ownership allegation missing'
+    checkboxes: []
+    fact_key: null
+    validation: null
+    question_variants:
+    - fact_key: complaint:OWNERSHIP
+      equals: 'yes'
+      text: 'This argument does not apply if the debt buyer  said in the complaint that it legally owns
+        the debt and has the right to sue on it.
+
+
+        [PLAINTIFF] said in the complaint that it legally owns the debt and has the right to sue.
+
+
+        Many people in this situation skip this argument.
+
+
+        Do you want to argue that [PLAINTIFF] failed to claim ownership?'
+  cause_common_attachment_checkbox:
+    kind: choice
+    question: 'This argument may apply if the debt buyer did not attach either (1) a statement from [ORIGINAL.CREDITOR]
+      or (2) a contract showing they bought the debt.
+
+
+      [PLAINTIFF] did not appear to attach either a statement from [ORIGINAL.CREDITOR] or a contract showing
+      they bought the debt.
+
+
+      Many people in this situation raise this argument and write in “no proof of plaintiff ownership.
+
+
+      Do you want to argue that [PLAINTIFF] failed to provide proof of ownership?'
+    title: Failure to State a Cause of Action
+    discussion_topic: Failure to State a Cause of Action
+    discussion_mode: decision
+    branches:
+    - id: 'yes'
+      label: Yes.
+      target: cause_recent_debt_gate
+    - id: 'no'
+      label: No.
+      target: cause_recent_debt_gate
+    - id: unknown
+      label: Not sure.
+      target: cause_common_attachment_checkbox_nov14_unknown
+    checkbox:
+      defense_id: failure_to_state_cause
+      checkbox_id: common_third_ownership
+      label: 'Common Counts: no proof of plaintiff ownership'
+    checkboxes: []
+    fact_key: null
+    validation: null
+  identity_finish_no:
+    kind: action
+    title: Identity Theft
+    question: 'You said that no one stole your card to make purchases without your permission.
+
+
+      This defense does not apply.'
+    discussion_topic: Identity Theft
+    discussion_mode: screening
+    action: script_finish:identity_theft:identity_finish_no
+    next: identity_theft_confirm
+  identity_finish_recognized:
+    question: 'This defense does not apply if you recognize this as an account you opened.
+
+
+      You previously said that you recognized this as an account you opened.
+
+
+      Many people in this situation skip this defense.'
+    next: identity_theft_confirm
+  wrong_party_recognize:
+    kind: condition
+    title: Wrong Party
+    question: ''
+    discussion_topic: Wrong Party
+    discussion_mode: screening
+    condition_key: field:RECOGNIZE
+    branches:
+    - id: 'yes'
+      label: 'yes'
+      target: wrong_party_recognized_choice
+    - id: 'no'
+      label: 'no'
+      target: wrong_party_account_choice
+    - id: unknown
+      label: unknown
+      target: wrong_party_recognize_resolve
+  wrong_party_finish_recognized:
+    kind: action
+    title: Wrong Party
+    question: 'You said that you recognize the account being sued for as one that you opened.
+
+
+      If you recognize this account as one you opened, this defense does not apply.'
+    discussion_topic: Wrong Party
+    discussion_mode: screening
+    action: script_finish:wrong_party:wrong_party_finish_recognized
+    next: wrong_party_confirm
+  common_counts_identity:
+    condition_key: selection:identity_theft
+    routes:
+      'yes': common_counts_fourth_checkbox
+      'no': common_counts_fraud
+      unknown: common_counts_fraud
+  sol_checkboxes_first_third:
+    question: Do you want to raise a Statute of Limitations defense for California and Delaware written
+      contracts?
+  identity_recognize:
+    routes:
+      'yes': identity_recognized_choice
+      'no': identity_account_choice
 confirmation:
   selected: Based on your answers to this defense section, here are the checkboxes you’ve indicated you’d
     like to check off. Raise your hand and ask clinic staff for help if you have further questions about
     this defense.
   empty: Based on your answers to this defense section, you don’t want to check off the defense. Raise
     your hand and ask clinic staff for help if you have further questions about this defense.
+  reminder: When completing Attachment 4, make sure to check off the main ‘[DEFENSE NAME]’ checkbox.
 parent_outcomes:
   failure_to_mitigate:
     selected: 'You said that [PLAINTIFF] did not attempt to arrange payments or negotiate before suing.
@@ -739,6 +1372,16 @@ parent_outcomes:
       off the overall “Excuse or Breach of Contract” defense.
     empty: You said there are no issues under Excuse or Breach of Contract with the amount or account
       being sued over. This defense does not apply.
+  standing_privity:
+    selected: Since you believe at least one of the defenses under “Standing/Privity” applies, check off
+      the main “Standing/Privity” box.
+    empty: Based on your answers to this defense section, you don’t want to check off the defense. Raise
+      your hand and ask clinic staff for help if you have further questions about this defense.
+  failure_to_state_cause:
+    selected: Since you believe at least one of the defenses under “Common Counts” applies, check off
+      the “Common Counts” parent box and the main “Failure to State a Cause of Action” box.
+    empty: Based on your answers to this defense section, you don’t want to check off the defense. Raise
+      your hand and ask clinic staff for help if you have further questions about this defense.
 presentation:
   context_actions:
   - sol_buyer
@@ -763,6 +1406,25 @@ presentation:
   - tender_payment_uncertain
   - language_negotiation_uncertain
   - language_translation_uncertain
+  - standing_first_nov14_unknown
+  - standing_second_buyer_nov14_unknown
+  - standing_original_choice_nov14_unknown
+  - cause_breach_first_nov14_unknown
+  - cause_breach_second_buyer_nov14_unknown
+  - cause_breach_open_choice_nov14_unknown
+  - cause_breach_dates_choice_nov14_unknown
+  - cause_breach_attachment_checkbox_nov14_unknown
+  - cause_common_first_nov14_unknown
+  - cause_common_second_buyer_nov14_unknown
+  - cause_common_attachment_checkbox_nov14_unknown
+  - cause_recent_debt_choice_nov14_unknown
+  - identity_theft_completed
+  - identity_card_unknown
+  - identity_theft_decision_nov14_unknown
+  - wrong_party_completed
+  - wrong_party_identity_choice_nov14_unknown
+  - wrong_party_account_choice_nov14_unknown
+  - sol_finish
   context_preambles:
   - sol_checkbox_second
   - common_counts_first_checkbox
@@ -770,7 +1432,15 @@ presentation:
   - common_counts_fifth_checkbox
   - excuse_second_checkbox
   - excuse_fifth_checkbox
-  response_only_nodes: []
+  - identity_negative_choice
+  - identity_account_choice
+  - wrong_party_recognized_choice
+  - identity_recognized_choice
+  response_only_nodes:
+  - identity_negative_choice_unresolved
+  - identity_account_choice_unresolved
+  - wrong_party_recognized_choice_unresolved
+  - identity_recognized_choice_unresolved
   response_only_preambles: []
   prefix_separators: {}
   answer_rules: {}
@@ -792,6 +1462,10 @@ presentation:
   - oral_modification
   - tender_payment
   - language_1632
+  - standing_privity
+  - failure_to_state_cause
+  - identity_theft
+  - wrong_party
   confirmation_on_review_defenses:
   - statute_of_limitations
   - ambiguity
@@ -810,6 +1484,10 @@ presentation:
   - oral_modification
   - tender_payment
   - language_1632
+  - standing_privity
+  - failure_to_state_cause
+  - identity_theft
+  - wrong_party
   explanation_on_question:
     ambiguity:
     - ambiguity_decision
@@ -837,3 +1515,1608 @@ summary_labels:
     third: An agreed change was not honored
     fourth: Credit insurance payments were not made
     fifth: Unreasonable accommodation of the user’s financial situation
+  standing_privity:
+    first: Ownership statement missing
+    second: Proof of legal ownership and obligation to pay
+  failure_to_state_cause:
+    breach_parent: Breach of Contract parent checkbox
+    common_parent: Common Counts parent checkbox
+    breach_first: 'Breach: original creditor not identified'
+    breach_second: 'Breach: ownership allegation missing'
+    breach_third: 'Breach: account opening date missing'
+    breach_fourth: 'Breach: payment and breach dates missing'
+    breach_fifth: 'Breach: no proof of plaintiff ownership'
+    common_first: 'Common Counts: original creditor not identified'
+    common_second: 'Common Counts: ownership allegation missing'
+    common_third: Common Counts third checkbox — write-in reasons
+    common_third_recent_debt: Debt incurred after July 1, 2024 (same third checkbox)
+    common_third_ownership: 'Common Counts third checkbox: no proof of plaintiff ownership'
+additional_nodes:
+- id: identity_theft_confirm
+  kind: choice
+  question: Review your selections.
+  title: Identity Theft
+  discussion_topic: Identity Theft
+  discussion_mode: confirmation
+  branches:
+  - id: continue
+    label: Continue.
+    target: identity_theft_completed
+- id: identity_theft_completed
+  kind: action
+  title: Identity Theft
+  question: ''
+  discussion_topic: Identity Theft
+  discussion_mode: screening
+  action: script_confirm:identity_theft
+  next: laches_intro
+- id: wrong_party_confirm
+  kind: choice
+  question: Review your selections.
+  title: Wrong Party
+  discussion_topic: Wrong Party
+  discussion_mode: confirmation
+  branches:
+  - id: continue
+    label: Continue.
+    target: wrong_party_completed
+- id: wrong_party_completed
+  kind: action
+  title: Wrong Party
+  question: ''
+  discussion_topic: Wrong Party
+  discussion_mode: screening
+  action: script_confirm:wrong_party
+  next: laches_intro
+- id: standing_first_nov14_unknown
+  kind: action
+  title: Standing and Privity
+  question: You have not chosen an answer. Ask a question or speak with clinic staff before deciding.
+  discussion_topic: Standing and Privity
+  discussion_mode: screening
+  action: script_issue:standing_privity:standing_first_nov14_unknown
+  next: standing_first_nov14_unknown_help
+- id: standing_first_nov14_unknown_help
+  kind: choice
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  title: Standing and Privity
+  discussion_topic: Standing and Privity
+  discussion_mode: questions
+  branches:
+  - id: retry
+    label: Return to the question.
+    target: standing_first
+  - id: unknown
+    label: Not sure.
+    target: standing_first_nov14_unknown_help
+- id: standing_second_buyer_nov14_unknown
+  kind: action
+  title: Standing and Privity
+  question: You have not chosen an answer. Ask a question or speak with clinic staff before deciding.
+  discussion_topic: Standing and Privity
+  discussion_mode: screening
+  action: script_issue:standing_privity:standing_second_buyer_nov14_unknown
+  next: standing_second_buyer_nov14_unknown_help
+- id: standing_second_buyer_nov14_unknown_help
+  kind: choice
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  title: Standing and Privity
+  discussion_topic: Standing and Privity
+  discussion_mode: questions
+  branches:
+  - id: retry
+    label: Return to the question.
+    target: standing_second_buyer
+  - id: unknown
+    label: Not sure.
+    target: standing_second_buyer_nov14_unknown_help
+- id: standing_original_choice_nov14_unknown
+  kind: action
+  title: Standing and Privity
+  question: You have not chosen an answer. Ask a question or speak with clinic staff before deciding.
+  discussion_topic: Standing and Privity
+  discussion_mode: screening
+  action: script_issue:standing_privity:standing_original_choice_nov14_unknown
+  next: standing_original_choice_nov14_unknown_help
+- id: standing_original_choice_nov14_unknown_help
+  kind: choice
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  title: Standing and Privity
+  discussion_topic: Standing and Privity
+  discussion_mode: questions
+  branches:
+  - id: retry
+    label: Return to the question.
+    target: standing_original_choice
+  - id: unknown
+    label: Not sure.
+    target: standing_original_choice_nov14_unknown_help
+- id: standing_original_choice
+  kind: choice
+  question: 'This defense may not apply if an original creditor is suing you, since the law requires less
+    proof that they own the debt.
+
+
+    The plaintiff suing you, [PLAINTIFF], is an original creditor.
+
+
+    Many people in this situation skip this defense.
+
+
+    Do you want to raise a Standing/Privity defense?'
+  title: Standing and Privity
+  discussion_topic: Standing and Privity
+  discussion_mode: decision
+  branches:
+  - id: 'yes'
+    label: Yes.
+    target: standing_original_first
+  - id: 'no'
+    label: No.
+    target: standing_privity_confirm
+  - id: unknown
+    label: Not sure.
+    target: standing_original_choice_nov14_unknown
+  checkbox:
+    defense_id: standing_privity
+    checkbox_id: main
+    label: Standing/Privity
+- id: cause_breach_type
+  kind: condition
+  title: Failure to State a Cause of Action
+  question: ''
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  condition_key: field:PLAINTIFF
+  branches:
+  - id: buyer
+    label: buyer
+    target: cause_breach_name_gate
+  - id: original
+    label: original
+    target: cause_breach_open_gate
+  - id: unknown
+    label: unknown
+    target: cause_creditor_type_resolve
+- id: cause_breach_name_gate
+  kind: condition
+  title: Failure to State a Cause of Action
+  question: ''
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  condition_key: complaint:ORIGINAL.CREDITOR
+  branches:
+  - id: 'yes'
+    label: 'yes'
+    target: cause_breach_first
+  - id: 'no'
+    label: 'no'
+    target: cause_breach_first
+  - id: unknown
+    label: unknown
+    target: cause_original_name_resolve
+- id: cause_breach_first_nov14_unknown
+  kind: action
+  title: Failure to State a Cause of Action
+  question: You have not chosen an answer. Ask a question or speak with clinic staff before deciding.
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  action: script_issue:failure_to_state_cause:cause_breach_first_nov14_unknown
+  next: cause_breach_first_nov14_unknown_help
+- id: cause_breach_first_nov14_unknown_help
+  kind: choice
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  title: Failure to State a Cause of Action
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: questions
+  branches:
+  - id: retry
+    label: Return to the question.
+    target: cause_breach_first
+  - id: unknown
+    label: Not sure.
+    target: cause_breach_first_nov14_unknown_help
+- id: cause_breach_owner_gate
+  kind: condition
+  title: Failure to State a Cause of Action
+  question: ''
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  condition_key: complaint:OWNERSHIP
+  branches:
+  - id: 'yes'
+    label: 'yes'
+    target: cause_breach_second_buyer
+  - id: 'no'
+    label: 'no'
+    target: cause_breach_second_buyer
+  - id: unknown
+    label: unknown
+    target: cause_owner_resolve
+- id: cause_breach_second_buyer_nov14_unknown
+  kind: action
+  title: Failure to State a Cause of Action
+  question: You have not chosen an answer. Ask a question or speak with clinic staff before deciding.
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  action: script_issue:failure_to_state_cause:cause_breach_second_buyer_nov14_unknown
+  next: cause_breach_second_buyer_nov14_unknown_help
+- id: cause_breach_second_buyer_nov14_unknown_help
+  kind: choice
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  title: Failure to State a Cause of Action
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: questions
+  branches:
+  - id: retry
+    label: Return to the question.
+    target: cause_breach_second_buyer
+  - id: unknown
+    label: Not sure.
+    target: cause_breach_second_buyer_nov14_unknown_help
+- id: cause_breach_open_gate
+  kind: condition
+  title: Failure to State a Cause of Action
+  question: ''
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  condition_key: complaint:OPEN-DATE
+  branches:
+  - id: 'yes'
+    label: 'yes'
+    target: cause_breach_open_choice
+  - id: 'no'
+    label: 'no'
+    target: cause_breach_open_choice
+  - id: unknown
+    label: unknown
+    target: cause_open_date_resolve
+- id: cause_breach_open_choice_nov14_unknown
+  kind: action
+  title: Failure to State a Cause of Action
+  question: You have not chosen an answer. Ask a question or speak with clinic staff before deciding.
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  action: script_issue:failure_to_state_cause:cause_breach_open_choice_nov14_unknown
+  next: cause_breach_open_choice_nov14_unknown_help
+- id: cause_breach_open_choice_nov14_unknown_help
+  kind: choice
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  title: Failure to State a Cause of Action
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: questions
+  branches:
+  - id: retry
+    label: Return to the question.
+    target: cause_breach_open_choice
+  - id: unknown
+    label: Not sure.
+    target: cause_breach_open_choice_nov14_unknown_help
+- id: cause_breach_open_choice
+  kind: choice
+  question: 'This argument may apply if the account opening date is missing from the plaintiff’s complaint.
+
+
+    The account opening date is missing from [PLAINTIFF]’s complaint.
+
+
+    Many people in this situation raise this argument.
+
+
+    Do you want to argue that [PLAINTIFF] failed to state the account opening date?'
+  title: Failure to State a Cause of Action
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: decision
+  branches:
+  - id: 'yes'
+    label: Yes.
+    target: cause_breach_dates_gate
+  - id: 'no'
+    label: No.
+    target: cause_breach_dates_gate
+  - id: unknown
+    label: Not sure.
+    target: cause_breach_open_choice_nov14_unknown
+  checkbox:
+    defense_id: failure_to_state_cause
+    checkbox_id: breach_third
+    label: 'Breach: account opening date missing'
+  question_variants:
+  - fact_key: complaint:OPEN-DATE
+    equals: 'yes'
+    text: 'This argument does not apply if the account opening date is included in the plaintiff’s complaint.
+
+
+      The account opening date is included in [PLAINTIFF]’s complaint.
+
+
+      Many people in this situation skip this argument.
+
+
+      Do you want to argue that [PLAINTIFF] failed to state the account opening date?'
+- id: cause_breach_dates_gate
+  kind: condition
+  title: Failure to State a Cause of Action
+  question: ''
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  condition_key: rule:cause_both_dates_missing
+  branches:
+  - id: 'yes'
+    label: 'yes'
+    target: cause_breach_dates_choice
+  - id: 'no'
+    label: 'no'
+    target: cause_breach_dates_choice
+  - id: unknown
+    label: unknown
+    target: cause_date_presence_resolve
+- id: cause_breach_dates_choice_nov14_unknown
+  kind: action
+  title: Failure to State a Cause of Action
+  question: You have not chosen an answer. Ask a question or speak with clinic staff before deciding.
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  action: script_issue:failure_to_state_cause:cause_breach_dates_choice_nov14_unknown
+  next: cause_breach_dates_choice_nov14_unknown_help
+- id: cause_breach_dates_choice_nov14_unknown_help
+  kind: choice
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  title: Failure to State a Cause of Action
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: questions
+  branches:
+  - id: retry
+    label: Return to the question.
+    target: cause_breach_dates_choice
+  - id: unknown
+    label: Not sure.
+    target: cause_breach_dates_choice_nov14_unknown_help
+- id: cause_breach_dates_choice
+  kind: choice
+  question: 'This argument may apply if the last payment date and breach date are missing from the plaintiff’s
+    complaint.
+
+
+    The last payment date and breach date are missing from [PLAINTIFF]’s complaint.
+
+
+    Many people in this situation raise this argument.
+
+
+    Do you want to argue that [PLAINTIFF] failed to state both the last payment and breach date?'
+  title: Failure to State a Cause of Action
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: decision
+  branches:
+  - id: 'yes'
+    label: Yes.
+    target: cause_breach_attachment_type
+  - id: 'no'
+    label: No.
+    target: cause_breach_attachment_type
+  - id: unknown
+    label: Not sure.
+    target: cause_breach_dates_choice_nov14_unknown
+  checkbox:
+    defense_id: failure_to_state_cause
+    checkbox_id: breach_fourth
+    label: 'Breach: payment and breach dates missing'
+  question_variants:
+  - fact_key: rule:cause_both_dates_missing
+    equals: 'no'
+    text: 'This argument does not apply if the last payment date or breach date are included in the plaintiff’s
+      complaint.
+
+
+      Many people in this situation skip this argument.
+
+
+      Do you want to argue that [PLAINTIFF] failed to state both the last payment and breach date?'
+- id: cause_breach_attachment_type
+  kind: condition
+  title: Failure to State a Cause of Action
+  question: ''
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  condition_key: field:PLAINTIFF
+  branches:
+  - id: buyer
+    label: buyer
+    target: cause_breach_attachment_gate
+  - id: original
+    label: original
+    target: cause_breach_parent_result
+  - id: unknown
+    label: unknown
+    target: cause_creditor_type_resolve
+- id: cause_breach_attachment_gate
+  kind: condition
+  title: Failure to State a Cause of Action
+  question: ''
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  condition_key: rule:cause_attachments_missing
+  branches:
+  - id: 'yes'
+    label: 'yes'
+    target: cause_breach_attachment_checkbox
+  - id: 'no'
+    label: 'no'
+    target: cause_breach_parent_result
+  - id: unknown
+    label: unknown
+    target: cause_attachment_resolve
+- id: cause_breach_attachment_checkbox_nov14_unknown
+  kind: action
+  title: Failure to State a Cause of Action
+  question: You have not chosen an answer. Ask a question or speak with clinic staff before deciding.
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  action: script_issue:failure_to_state_cause:cause_breach_attachment_checkbox_nov14_unknown
+  next: cause_breach_attachment_checkbox_nov14_unknown_help
+- id: cause_breach_attachment_checkbox_nov14_unknown_help
+  kind: choice
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  title: Failure to State a Cause of Action
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: questions
+  branches:
+  - id: retry
+    label: Return to the question.
+    target: cause_breach_attachment_checkbox
+  - id: unknown
+    label: Not sure.
+    target: cause_breach_attachment_checkbox_nov14_unknown_help
+- id: cause_breach_parent_result
+  kind: action
+  title: Failure to State a Cause of Action
+  question: ''
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  action: script_parent:failure_to_state_cause:cause_breach_parent_result
+  next: cause_after_breach
+- id: cause_common_name_gate
+  kind: condition
+  title: Failure to State a Cause of Action
+  question: ''
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  condition_key: complaint:ORIGINAL.CREDITOR
+  branches:
+  - id: 'yes'
+    label: 'yes'
+    target: cause_common_first
+  - id: 'no'
+    label: 'no'
+    target: cause_common_first
+  - id: unknown
+    label: unknown
+    target: cause_common_name_resolve
+- id: cause_common_first_nov14_unknown
+  kind: action
+  title: Failure to State a Cause of Action
+  question: You have not chosen an answer. Ask a question or speak with clinic staff before deciding.
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  action: script_issue:failure_to_state_cause:cause_common_first_nov14_unknown
+  next: cause_common_first_nov14_unknown_help
+- id: cause_common_first_nov14_unknown_help
+  kind: choice
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  title: Failure to State a Cause of Action
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: questions
+  branches:
+  - id: retry
+    label: Return to the question.
+    target: cause_common_first
+  - id: unknown
+    label: Not sure.
+    target: cause_common_first_nov14_unknown_help
+- id: cause_common_owner_gate
+  kind: condition
+  title: Failure to State a Cause of Action
+  question: ''
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  condition_key: complaint:OWNERSHIP
+  branches:
+  - id: 'yes'
+    label: 'yes'
+    target: cause_common_second_buyer
+  - id: 'no'
+    label: 'no'
+    target: cause_common_second_buyer
+  - id: unknown
+    label: unknown
+    target: cause_common_owner_resolve
+- id: cause_common_second_buyer_nov14_unknown
+  kind: action
+  title: Failure to State a Cause of Action
+  question: You have not chosen an answer. Ask a question or speak with clinic staff before deciding.
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  action: script_issue:failure_to_state_cause:cause_common_second_buyer_nov14_unknown
+  next: cause_common_second_buyer_nov14_unknown_help
+- id: cause_common_second_buyer_nov14_unknown_help
+  kind: choice
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  title: Failure to State a Cause of Action
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: questions
+  branches:
+  - id: retry
+    label: Return to the question.
+    target: cause_common_second_buyer
+  - id: unknown
+    label: Not sure.
+    target: cause_common_second_buyer_nov14_unknown_help
+- id: cause_common_attachment_gate
+  kind: condition
+  title: Failure to State a Cause of Action
+  question: ''
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  condition_key: rule:cause_attachments_missing
+  branches:
+  - id: 'yes'
+    label: 'yes'
+    target: cause_common_attachment_checkbox
+  - id: 'no'
+    label: 'no'
+    target: cause_recent_debt_gate
+  - id: unknown
+    label: unknown
+    target: cause_common_attachment_resolve
+- id: cause_common_attachment_checkbox_nov14_unknown
+  kind: action
+  title: Failure to State a Cause of Action
+  question: You have not chosen an answer. Ask a question or speak with clinic staff before deciding.
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  action: script_issue:failure_to_state_cause:cause_common_attachment_checkbox_nov14_unknown
+  next: cause_common_attachment_checkbox_nov14_unknown_help
+- id: cause_common_attachment_checkbox_nov14_unknown_help
+  kind: choice
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  title: Failure to State a Cause of Action
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: questions
+  branches:
+  - id: retry
+    label: Return to the question.
+    target: cause_common_attachment_checkbox
+  - id: unknown
+    label: Not sure.
+    target: cause_common_attachment_checkbox_nov14_unknown_help
+- id: cause_recent_debt_gate
+  kind: condition
+  title: Failure to State a Cause of Action
+  question: ''
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  condition_key: rule:cause_recent_debt
+  branches:
+  - id: 'yes'
+    label: 'yes'
+    target: cause_recent_debt_choice
+  - id: 'no'
+    label: 'no'
+    target: cause_common_parent_result
+  - id: unknown
+    label: unknown
+    target: cause_recent_debt_resolve
+- id: cause_recent_debt_choice_nov14_unknown
+  kind: action
+  title: Failure to State a Cause of Action
+  question: You have not chosen an answer. Ask a question or speak with clinic staff before deciding.
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  action: script_issue:failure_to_state_cause:cause_recent_debt_choice_nov14_unknown
+  next: cause_recent_debt_choice_nov14_unknown_help
+- id: cause_recent_debt_choice_nov14_unknown_help
+  kind: choice
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  title: Failure to State a Cause of Action
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: questions
+  branches:
+  - id: retry
+    label: Return to the question.
+    target: cause_recent_debt_choice
+  - id: unknown
+    label: Not sure.
+    target: cause_recent_debt_choice_nov14_unknown_help
+- id: cause_recent_debt_choice
+  kind: choice
+  question: 'This argument may apply if your debt is from after July 1, 2024.
+
+
+    Many people in this situation raise this argument and write in “debt incurred after July 1, 2024.
+
+
+    Raise your hand and notify clinic staff, who can give you more legal guidance.
+
+
+    Do you want to argue that [PLAINTIFF] sued for debt created after July 1, 2024?'
+  title: Failure to State a Cause of Action
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: decision
+  branches:
+  - id: 'yes'
+    label: Yes.
+    target: cause_common_parent_result
+  - id: 'no'
+    label: No.
+    target: cause_common_parent_result
+  - id: unknown
+    label: Not sure.
+    target: cause_recent_debt_choice_nov14_unknown
+  checkbox:
+    defense_id: failure_to_state_cause
+    checkbox_id: common_third_recent_debt
+    label: 'Common Counts: debt incurred after July 1, 2024'
+- id: cause_common_parent_result
+  kind: action
+  title: Failure to State a Cause of Action
+  question: ''
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  action: script_parent:failure_to_state_cause:cause_common_parent_result
+  next: failure_to_state_cause_confirm
+- id: cause_original_name_resolve
+  title: Failure to State a Cause of Action
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  kind: action
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  action: script_say:failure_to_state_cause:cause_original_name_resolve
+  next: cause_breach_name_gate
+- id: cause_owner_resolve
+  title: Failure to State a Cause of Action
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  kind: action
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  action: script_say:failure_to_state_cause:cause_owner_resolve
+  next: cause_breach_owner_gate
+- id: cause_open_date_resolve
+  title: Failure to State a Cause of Action
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  kind: action
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  action: script_say:failure_to_state_cause:cause_open_date_resolve
+  next: cause_breach_open_gate
+- id: cause_common_name_resolve
+  title: Failure to State a Cause of Action
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  kind: action
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  action: script_say:failure_to_state_cause:cause_common_name_resolve
+  next: cause_common_name_gate
+- id: cause_date_presence_resolve
+  title: Failure to State a Cause of Action
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  kind: action
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  action: script_say:failure_to_state_cause:cause_date_presence_resolve
+  next: cause_breach_dates_gate
+- id: cause_attachment_resolve
+  title: Failure to State a Cause of Action
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  kind: action
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  action: script_say:failure_to_state_cause:cause_attachment_resolve
+  next: cause_breach_attachment_gate
+- id: cause_common_attachment_resolve
+  title: Failure to State a Cause of Action
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  kind: action
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  action: script_say:failure_to_state_cause:cause_common_attachment_resolve
+  next: cause_common_attachment_gate
+- id: cause_recent_debt_resolve
+  title: Failure to State a Cause of Action
+  discussion_topic: Failure to State a Cause of Action
+  discussion_mode: screening
+  kind: action
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  action: script_say:failure_to_state_cause:cause_recent_debt_resolve
+  next: cause_recent_debt_gate
+- id: identity_stolen_card
+  kind: choice
+  question: Did someone steal your card to make purchases without your permission?
+  title: Identity Theft
+  discussion_topic: Identity Theft
+  discussion_mode: screening
+  branches:
+  - id: 'yes'
+    label: 'yes'
+    target: identity_theft_decision
+  - id: 'no'
+    label: 'no'
+    target: identity_negative_choice
+  - id: unknown
+    label: unknown
+    target: identity_card_unknown
+- id: identity_card_unknown
+  kind: action
+  title: Identity Theft
+  question: 'You said that you’re not sure whether someone stole your card to buy things without your
+    permission.
+
+
+    Looking at your past statements and whether you recognize the purchased items may help you remember.'
+  discussion_topic: Identity Theft
+  discussion_mode: screening
+  action: script_issue:identity_theft:identity_card_unknown
+  next: identity_card_unknown_help
+- id: identity_card_unknown_help
+  kind: choice
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  title: Identity Theft
+  discussion_topic: Identity Theft
+  discussion_mode: questions
+  branches:
+  - id: retry
+    label: Return to the question.
+    target: identity_stolen_card
+  - id: unknown
+    label: Not sure.
+    target: identity_card_unknown_help
+- id: identity_theft_decision_nov14_unknown
+  kind: action
+  title: Identity Theft
+  question: You have not chosen an answer. Ask a question or speak with clinic staff before deciding.
+  discussion_topic: Identity Theft
+  discussion_mode: screening
+  action: script_issue:identity_theft:identity_theft_decision_nov14_unknown
+  next: identity_theft_decision_nov14_unknown_help
+- id: identity_theft_decision_nov14_unknown_help
+  kind: choice
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  title: Identity Theft
+  discussion_topic: Identity Theft
+  discussion_mode: questions
+  branches:
+  - id: retry
+    label: Return to the question.
+    target: identity_theft_decision
+  - id: unknown
+    label: Not sure.
+    target: identity_theft_decision_nov14_unknown_help
+- id: identity_theft_decision
+  kind: choice
+  question: 'Identity Theft may apply if you think someone stole your card to make purchases without your
+    permission on this account.
+
+
+    You think someone stole your card to make purchases without your permission.
+
+
+    Many people in this situation raise this defense.
+
+
+    Do you want to raise an Identity Theft defense?'
+  title: Identity Theft
+  discussion_topic: Identity Theft
+  discussion_mode: decision
+  branches:
+  - id: 'yes'
+    label: Yes.
+    target: identity_clinic_notice
+  - id: 'no'
+    label: No.
+    target: identity_recognize
+  - id: unknown
+    label: Not sure.
+    target: identity_theft_decision_nov14_unknown
+  checkbox:
+    defense_id: identity_theft
+    checkbox_id: main
+    label: Identity Theft
+- id: identity_clinic_notice
+  kind: action
+  title: Identity Theft
+  question: This is an important matter which may require further steps. Please raise your hand and ask
+    clinic staff for help.
+  discussion_topic: Identity Theft
+  discussion_mode: screening
+  action: script_say:identity_theft:identity_clinic_notice
+  next: identity_recognize
+- id: wrong_party_identity_choice_gate
+  kind: condition
+  title: Wrong Party
+  question: ''
+  discussion_topic: Wrong Party
+  discussion_mode: screening
+  condition_key: selection:identity_theft
+  branches:
+  - id: 'yes'
+    label: 'yes'
+    target: wrong_party_identity_choice
+  - id: 'no'
+    label: 'no'
+    target: wrong_party_recognize
+  - id: unknown
+    label: unknown
+    target: wrong_party_recognize
+- id: wrong_party_identity_choice_nov14_unknown
+  kind: action
+  title: Wrong Party
+  question: You have not chosen an answer. Ask a question or speak with clinic staff before deciding.
+  discussion_topic: Wrong Party
+  discussion_mode: screening
+  action: script_issue:wrong_party:wrong_party_identity_choice_nov14_unknown
+  next: wrong_party_identity_choice_nov14_unknown_help
+- id: wrong_party_identity_choice_nov14_unknown_help
+  kind: choice
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  title: Wrong Party
+  discussion_topic: Wrong Party
+  discussion_mode: questions
+  branches:
+  - id: retry
+    label: Return to the question.
+    target: wrong_party_identity_choice
+  - id: unknown
+    label: Not sure.
+    target: wrong_party_identity_choice_nov14_unknown_help
+- id: wrong_party_identity_choice
+  kind: choice
+  question: 'Wrong Party applies if Identity Theft applies. Both defenses say someone else created this
+    debt and is therefore responsible for the debt.
+
+
+    You previously checked off Identity Theft.
+
+
+    Many people in this situation check off this defense.
+
+
+    Do you want to raise a Wrong Party defense?'
+  title: Wrong Party
+  discussion_topic: Wrong Party
+  discussion_mode: decision
+  branches:
+  - id: 'yes'
+    label: Yes.
+    target: wrong_party_finish_selected
+  - id: 'no'
+    label: No.
+    target: wrong_party_recognize
+  - id: unknown
+    label: Not sure.
+    target: wrong_party_identity_choice_nov14_unknown
+  checkbox:
+    defense_id: wrong_party
+    checkbox_id: main
+    label: Wrong Party
+- id: wrong_party_account_choice_nov14_unknown
+  kind: action
+  title: Wrong Party
+  question: You have not chosen an answer. Ask a question or speak with clinic staff before deciding.
+  discussion_topic: Wrong Party
+  discussion_mode: screening
+  action: script_issue:wrong_party:wrong_party_account_choice_nov14_unknown
+  next: wrong_party_account_choice_nov14_unknown_help
+- id: wrong_party_account_choice_nov14_unknown_help
+  kind: choice
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  title: Wrong Party
+  discussion_topic: Wrong Party
+  discussion_mode: questions
+  branches:
+  - id: retry
+    label: Return to the question.
+    target: wrong_party_account_choice
+  - id: unknown
+    label: Not sure.
+    target: wrong_party_account_choice_nov14_unknown_help
+- id: wrong_party_account_choice
+  kind: choice
+  question: 'Wrong Party may apply if you do not recognize this as an account you opened. For example:
+
+
+    Someone else you know may have opened the account
+
+
+    [PLAINTIFF] may have sued someone with a similar name
+
+
+    You said that you do not recognize this as an account you opened.
+
+
+    Many people in this situation raise this defense.
+
+
+    Do you want to raise a Wrong Party defense?'
+  title: Wrong Party
+  discussion_topic: Wrong Party
+  discussion_mode: decision
+  branches:
+  - id: 'yes'
+    label: Yes.
+    target: wrong_party_account_notice_gate
+  - id: 'no'
+    label: No.
+    target: wrong_party_account_notice_gate
+  - id: unknown
+    label: Not sure.
+    target: wrong_party_account_choice_nov14_unknown
+  checkbox:
+    defense_id: wrong_party
+    checkbox_id: main
+    label: Wrong Party
+- id: wrong_party_clinic_notice
+  kind: action
+  title: Wrong Party
+  question: This is an important matter which may require further steps. Please raise your hand and ask
+    clinic staff for help.
+  discussion_topic: Wrong Party
+  discussion_mode: screening
+  action: script_say:wrong_party:wrong_party_clinic_notice
+  next: wrong_party_confirm
+- id: sol_written_unresolved
+  kind: action
+  title: Statute of Limitations
+  discussion_topic: Statute of Limitations
+  discussion_mode: screening
+  question: You have not chosen whether to raise this defense. Ask a question or speak with clinic staff
+    before deciding.
+  action: script_issue:statute_of_limitations:sol_written_unresolved_issue
+  next: sol_written_unresolved_help
+- id: sol_written_unresolved_help
+  kind: choice
+  title: Statute of Limitations
+  discussion_topic: Statute of Limitations
+  discussion_mode: questions
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  branches:
+  - id: retry
+    label: Return to the question.
+    target: sol_written
+  - id: unknown
+    label: Not sure.
+    target: sol_written_unresolved_help
+- id: standing_original_first
+  kind: choice
+  title: Standing and Privity
+  discussion_topic: Standing and Privity
+  discussion_mode: decision
+  question: 'This argument may not apply if an original creditor is suing you, since the law requires
+    less proof that they own the debt.
+
+
+    The plaintiff suing you, [PLAINTIFF], is an original creditor.
+
+
+    Many people in this situation skip this argument.
+
+
+    Do you want to argue that [PLAINTIFF] failed to claim ownership?'
+  checkbox:
+    defense_id: standing_privity
+    checkbox_id: first
+    label: Ownership statement missing
+  branches:
+  - id: 'yes'
+    label: Yes.
+    target: standing_original_second
+  - id: 'no'
+    label: No.
+    target: standing_original_second
+  - id: unknown
+    label: Not sure.
+    target: standing_original_first_unresolved
+- id: standing_original_first_unresolved
+  discussion_mode: questions
+  kind: action
+  title: Standing and Privity
+  discussion_topic: Standing and Privity
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  action: script_issue:standing_privity:standing_original_first_issue
+  next: standing_original_first_help
+- id: standing_original_first_help
+  kind: choice
+  title: Standing and Privity
+  discussion_topic: Standing and Privity
+  discussion_mode: questions
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  branches:
+  - id: retry
+    label: Return to the question.
+    target: standing_original_first
+  - id: unknown
+    label: I still need help.
+    target: standing_original_first_help
+- id: standing_original_second
+  kind: choice
+  title: Standing and Privity
+  discussion_topic: Standing and Privity
+  discussion_mode: decision
+  question: 'This argument may not apply if an original creditor is suing you, since the law requires
+    less proof that they own the debt.
+
+
+    The plaintiff suing you, [PLAINTIFF], is an original creditor.
+
+
+    Many people in this situation skip this argument.
+
+
+    Do you want to argue that [PLAINTIFF] failed to provide proof of ownership?'
+  checkbox:
+    defense_id: standing_privity
+    checkbox_id: second
+    label: Proof of legal ownership and obligation to pay
+  branches:
+  - id: 'yes'
+    label: Yes.
+    target: standing_privity_confirm
+  - id: 'no'
+    label: No.
+    target: standing_privity_confirm
+  - id: unknown
+    label: Not sure.
+    target: standing_original_second_unresolved
+- id: standing_original_second_unresolved
+  discussion_mode: questions
+  kind: action
+  title: Standing and Privity
+  discussion_topic: Standing and Privity
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  action: script_issue:standing_privity:standing_original_second_issue
+  next: standing_original_second_help
+- id: standing_original_second_help
+  kind: choice
+  title: Standing and Privity
+  discussion_topic: Standing and Privity
+  discussion_mode: questions
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  branches:
+  - id: retry
+    label: Return to the question.
+    target: standing_original_second
+  - id: unknown
+    label: I still need help.
+    target: standing_original_second_help
+- id: identity_negative_choice
+  kind: choice
+  title: Identity Theft
+  discussion_topic: Identity Theft
+  discussion_mode: decision
+  question: 'Identity Theft does not apply if nobody stole your card to make purchases without your permission
+    on this account.
+
+
+    You said that no one stole your card to make purchases without your permission.
+
+
+    Many people in this situation skip this defense.
+
+
+    Do you want to raise an Identity Theft defense?'
+  checkbox:
+    defense_id: identity_theft
+    checkbox_id: main
+    label: Identity Theft
+  branches:
+  - id: 'yes'
+    label: Yes.
+    target: identity_negative_notice
+  - id: 'no'
+    label: No.
+    target: identity_recognize
+  - id: unknown
+    label: Not sure.
+    target: identity_negative_choice_unresolved
+- id: identity_negative_choice_unresolved
+  kind: action
+  title: Identity Theft
+  discussion_topic: Identity Theft
+  discussion_mode: screening
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  action: script_issue:identity_theft:identity_negative_choice_issue
+  next: identity_negative_choice_help
+- id: identity_negative_choice_help
+  kind: choice
+  title: Identity Theft
+  discussion_topic: Identity Theft
+  discussion_mode: questions
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  branches:
+  - id: retry
+    label: Return to the question.
+    target: identity_negative_choice
+  - id: unknown
+    label: I still need help.
+    target: identity_negative_choice_help
+- id: identity_negative_notice
+  kind: action
+  title: Identity Theft
+  discussion_topic: Identity Theft
+  discussion_mode: screening
+  question: This is an important matter which may require further steps. Please raise your hand and ask
+    clinic staff for help.
+  action: script_say:identity_theft:identity_negative_notice
+  next: identity_recognize
+- id: identity_account_choice
+  kind: choice
+  title: Identity Theft
+  discussion_topic: Identity Theft
+  discussion_mode: decision
+  question: 'You said that you do not recognize this as an account you opened. This could happen because
+    [PLAINTIFF] mistakenly sued someone with a similar name, or because someone stole your identity to
+    create the account.
+
+
+    Identity Theft may apply if you think someone stole your identity to create the account.
+
+
+    Many people in this situation raise this defense.
+
+
+    Do you want to raise an Identity Theft defense?'
+  checkbox:
+    defense_id: identity_theft
+    checkbox_id: main
+    label: Identity Theft
+  branches:
+  - id: 'yes'
+    label: Yes.
+    target: identity_account_notice_gate
+  - id: 'no'
+    label: No.
+    target: identity_account_notice_gate
+  - id: unknown
+    label: Not sure.
+    target: identity_account_choice_unresolved
+- id: identity_account_choice_unresolved
+  kind: action
+  title: Identity Theft
+  discussion_topic: Identity Theft
+  discussion_mode: screening
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  action: script_issue:identity_theft:identity_account_choice_issue
+  next: identity_account_choice_help
+- id: identity_account_choice_help
+  kind: choice
+  title: Identity Theft
+  discussion_topic: Identity Theft
+  discussion_mode: questions
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  branches:
+  - id: retry
+    label: Return to the question.
+    target: identity_account_choice
+  - id: unknown
+    label: I still need help.
+    target: identity_account_choice_help
+- id: identity_account_notice
+  kind: action
+  title: Identity Theft
+  discussion_topic: Identity Theft
+  discussion_mode: screening
+  question: This is an important matter which may require further steps. Please raise your hand and ask
+    clinic staff for help.
+  action: script_say:identity_theft:identity_account_notice
+  next: identity_theft_confirm
+- id: wrong_party_recognized_choice
+  kind: choice
+  title: Wrong Party
+  discussion_topic: Wrong Party
+  discussion_mode: decision
+  question: 'Wrong Party does not apply if you recognize this as an account you opened.
+
+
+    You previously said that you recognize this as an account you opened.
+
+
+    Many people in this situation skip this defense.
+
+
+    Do you want to raise a Wrong Party defense?'
+  checkbox:
+    defense_id: wrong_party
+    checkbox_id: main
+    label: Wrong Party
+  branches:
+  - id: 'yes'
+    label: Yes.
+    target: wrong_party_recognized_notice_gate
+  - id: 'no'
+    label: No.
+    target: wrong_party_recognized_notice_gate
+  - id: unknown
+    label: Not sure.
+    target: wrong_party_recognized_choice_unresolved
+- id: wrong_party_recognized_choice_unresolved
+  kind: action
+  title: Wrong Party
+  discussion_topic: Wrong Party
+  discussion_mode: screening
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  action: script_issue:wrong_party:wrong_party_recognized_choice_issue
+  next: wrong_party_recognized_choice_help
+- id: wrong_party_recognized_choice_help
+  kind: choice
+  title: Wrong Party
+  discussion_topic: Wrong Party
+  discussion_mode: questions
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  branches:
+  - id: retry
+    label: Return to the question.
+    target: wrong_party_recognized_choice
+  - id: unknown
+    label: I still need help.
+    target: wrong_party_recognized_choice_help
+- id: wrong_party_recognized_notice
+  kind: action
+  title: Wrong Party
+  discussion_topic: Wrong Party
+  discussion_mode: screening
+  question: This is an important matter which may require further steps. Please raise your hand and ask
+    clinic staff for help.
+  action: script_say:wrong_party:wrong_party_recognized_notice
+  next: wrong_party_confirm
+- id: identity_account_notice_gate
+  kind: condition
+  title: Identity Theft
+  discussion_topic: Identity Theft
+  discussion_mode: screening
+  question: ''
+  condition_key: selection:identity_theft
+  branches:
+  - id: 'yes'
+    label: 'yes'
+    target: identity_account_notice
+  - id: 'no'
+    label: 'no'
+    target: identity_theft_confirm
+  - id: unknown
+    label: unknown
+    target: identity_account_choice_help
+- id: wrong_party_recognized_notice_gate
+  kind: condition
+  title: Wrong Party
+  discussion_topic: Wrong Party
+  discussion_mode: screening
+  question: ''
+  condition_key: selection:wrong_party
+  branches:
+  - id: 'yes'
+    label: 'yes'
+    target: wrong_party_recognized_notice
+  - id: 'no'
+    label: 'no'
+    target: wrong_party_confirm
+  - id: unknown
+    label: unknown
+    target: wrong_party_recognized_choice_help
+- id: wrong_party_account_notice_gate
+  kind: condition
+  title: Wrong Party
+  discussion_topic: Wrong Party
+  discussion_mode: screening
+  question: ''
+  condition_key: selection:wrong_party
+  branches:
+  - id: 'yes'
+    label: 'yes'
+    target: wrong_party_clinic_notice
+  - id: 'no'
+    label: 'no'
+    target: wrong_party_confirm
+  - id: unknown
+    label: unknown
+    target: wrong_party_account_choice_nov14_unknown_help
+- id: identity_recognized_choice
+  kind: choice
+  title: Identity Theft
+  discussion_topic: Identity Theft
+  discussion_mode: decision
+  question: 'This defense does not apply if you recognize this as an account you opened.
+
+
+    You previously said that you recognized this as an account you opened.
+
+
+    Many people in this situation skip this defense.
+
+
+    Do you want to raise an Identity Theft defense?'
+  checkbox:
+    defense_id: identity_theft
+    checkbox_id: main
+    label: Identity Theft
+  branches:
+  - id: 'yes'
+    label: Yes.
+    target: identity_recognized_notice_gate
+  - id: 'no'
+    label: No.
+    target: identity_recognized_notice_gate
+  - id: unknown
+    label: Not sure.
+    target: identity_recognized_choice_unresolved
+- id: identity_recognized_choice_unresolved
+  kind: action
+  title: Identity Theft
+  discussion_topic: Identity Theft
+  discussion_mode: screening
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  action: script_issue:identity_theft:identity_recognized_choice_issue
+  next: identity_recognized_choice_help
+- id: identity_recognized_choice_help
+  kind: choice
+  title: Identity Theft
+  discussion_topic: Identity Theft
+  discussion_mode: questions
+  question: Ask a clarifying question with the “Ask a Question” button or speak with clinic staff before
+    choosing an answer. Then click the “Next” button to choose your answer.
+  branches:
+  - id: retry
+    label: Return to the question.
+    target: identity_recognized_choice
+  - id: unknown
+    label: I still need help.
+    target: identity_recognized_choice_help
+- id: identity_recognized_notice_gate
+  kind: condition
+  title: Identity Theft
+  discussion_topic: Identity Theft
+  discussion_mode: screening
+  question: ''
+  condition_key: selection:identity_theft
+  branches:
+  - id: 'yes'
+    label: 'yes'
+    target: identity_recognized_notice
+  - id: 'no'
+    label: 'no'
+    target: identity_theft_confirm
+  - id: unknown
+    label: unknown
+    target: identity_recognized_choice_help
+- id: identity_recognized_notice
+  kind: action
+  title: Identity Theft
+  discussion_topic: Identity Theft
+  discussion_mode: screening
+  question: This is an important matter which may require further steps. Please raise your hand and ask
+    clinic staff for help.
+  action: script_say:identity_theft:identity_recognized_notice
+  next: identity_theft_confirm
+- id: wrong_party_finish_selected
+  kind: action
+  title: Wrong Party
+  discussion_topic: Wrong Party
+  discussion_mode: screening
+  question: ''
+  action: script_finish:wrong_party:wrong_party_finish_selected
+  next: wrong_party_confirm
+field_returns:
+  standing_creditor_type_resolve:
+    field: guided_creditor_type
+    route: standing_creditor_type
+  standing_first_gate_resolve:
+    field: guided_ownership_claim
+    route: standing_first_gate
+  cause_creditor_type_resolve:
+    field: guided_creditor_type
+    route: cause_creditor_type
+  cause_suit_type_resolve:
+    field: guided_suit_type
+    route: cause_suit_type
+  cause_original_name_resolve:
+    field: guided_original_creditor
+    route: cause_breach_name_gate
+  cause_owner_resolve:
+    field: guided_ownership_claim
+    route: cause_breach_owner_gate
+  cause_open_date_resolve:
+    field: guided_open_date
+    route: cause_breach_open_gate
+  cause_common_name_resolve:
+    field: guided_original_creditor
+    route: cause_common_name_gate
+  cause_common_owner_resolve:
+    field: guided_ownership_claim
+    route: cause_common_owner_gate
+  cause_date_presence_resolve:
+    fields:
+    - guided_payment_date
+    - guided_breach_date
+    route: cause_breach_dates_gate
+  cause_attachment_resolve:
+    fields:
+    - guided_statement
+    - guided_ownership_proof
+    route: cause_breach_attachment_gate
+  cause_common_attachment_resolve:
+    fields:
+    - guided_statement
+    - guided_ownership_proof
+    route: cause_common_attachment_gate
+  cause_recent_debt_resolve:
+    fields:
+    - guided_payment_date
+    - guided_breach_date
+    route: cause_recent_debt_gate
+  wrong_party_recognize_resolve:
+    field: guided_recognize
+    route: wrong_party_recognize
+  identity_recognize_resolve:
+    field: guided_recognize
+    route: identity_recognize
+parent_group_screens: {}
+date_restatements:
+  cause_breach_dates_choice:
+  - tag: LAST-PAYMENT-DATE
+    text: '[PLAINTIFF]’s complaint includes the last payment date as [LAST.PAYMENT.DATE].'
+  - tag: BREACH-DATE
+    text: '[PLAINTIFF]’s complaint includes the breach date as [BREACH.DATE].'
+  cause_recent_debt_choice:
+  - tag: LAST-PAYMENT-DATE
+    text: '[PLAINTIFF]’s complaint says your last payment date was [LAST.PAYMENT.DATE].'
+  - tag: BREACH-DATE
+    text: '[PLAINTIFF]’s complaint says your breach date was [BREACH.DATE].'
+complaint_contents_caption: 'The complaint contains:'
+complaint_contents:
+- fact_key: complaint:OWNERSHIP
+  text: A statement that [PLAINTIFF] owns the debt
+- fact_key: complaint:STATEMENT
+  text: An account statement
+- fact_key: complaint:OWNERSHIP.PROOF
+  text: A document supporting ownership of the debt
+- fact_key: complaint:OPEN-DATE
+  text: An account-opening date of [OPEN.DATE]
+- fact_key: complaint:LAST-PAYMENT-DATE
+  text: A last payment date of [LAST.PAYMENT.DATE]
+sol_choice_labels:
+  'yes': Yes, include this defense
+  'no': No, leave this defense out
+  unknown: I’m not sure yet
+revision_source: docs/source-material/2026-11-15/2026.11.15 Affirmative-Defense-Scripts-v3.docx
+confirmation_reminders: {}
+main_checkbox_names:
+  standing_privity: Standing/Privity
+  common_counts: Common Counts
+checkbox_parents:
+  statute_of_limitations:
+    first: main
+    second: main
+    third: main
+  standing_privity:
+    first: main
+    second: main
+  failure_to_mitigate:
+    first: main
+    second: main
+  common_counts:
+    first: main
+    second: main
+    third: main
+    fourth: main
+    fifth: main
+  excuse_breach:
+    first: main
+    second: main
+    third: main
+    fourth: main
+    fifth: main
+  failure_to_state_cause:
+    breach_parent: main
+    common_parent: main
+    breach_first: breach_parent
+    breach_second: breach_parent
+    breach_third: breach_parent
+    breach_fourth: breach_parent
+    breach_fifth: breach_parent
+    common_first: common_parent
+    common_second: common_parent
+    common_third: common_parent
+    common_third_ownership: common_third
+    common_third_recent_debt: common_third
+checkbox_ordinals:
+  statute_of_limitations:
+    first: 1
+    second: 2
+    third: 3
+  standing_privity:
+    first: 1
+    second: 2
+  failure_to_mitigate:
+    first: 1
+    second: 2
+  common_counts:
+    first: 1
+    second: 2
+    third: 3
+    fourth: 4
+    fifth: 5
+  excuse_breach:
+    first: 1
+    second: 2
+    third: 3
+    fourth: 4
+    fifth: 5
+  failure_to_state_cause:
+    breach_first: 1
+    breach_second: 2
+    breach_third: 3
+    breach_fourth: 4
+    breach_fifth: 5
+    common_first: 1
+    common_second: 2
+    common_third: 3
+combined_checkbox_choices:
+  identity_theft:
+    main:
+    - identity_theft_decision
+    - identity_negative_choice
+    - identity_account_choice
+    - identity_recognized_choice
+  wrong_party:
+    main:
+    - wrong_party_identity_choice
+    - wrong_party_account_choice
+    - wrong_party_recognized_choice
+checkbox_choice_labels:
+  identity_theft_decision: 'Identity Theft: stolen-card purchases'
+  identity_negative_choice: 'Identity Theft: no stolen-card purchases reported'
+  identity_account_choice: 'Identity Theft: account opened without permission'
+  wrong_party_identity_choice: 'Wrong Party: Identity Theft was selected'
+  wrong_party_account_choice: 'Wrong Party: unrecognized account'
+  wrong_party_recognized_choice: 'Wrong Party: recognized account'
+  identity_recognized_choice: 'Identity Theft: recognized account'
+date_restatement_positions:
+  cause_breach_dates_choice: 1
+  cause_recent_debt_choice: 1
+shared_source: docs/source-material/2026-11-15/2026.11.15 Affirmative-Defense-Scripts-v4.docx
+identity_source: docs/source-material/2026-11-15/2026.11.15 Affirmative-Defense-Scripts-v4.docx
+wrong_party_source: docs/source-material/2026-11-15/2026.11.15 Affirmative-Defense-Scripts-v4.docx

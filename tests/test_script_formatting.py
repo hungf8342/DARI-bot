@@ -42,8 +42,8 @@ def test_ambiguity_keeps_two_real_bullets_and_following_paragraphs():
     assert [b['type'] for b in blocks]==['paragraph','list','paragraph','paragraph','paragraph']
     assert blocks[0]['text'].endswith('confused about:')
     assert [i['text'] for i in blocks[1]['items']]==['the complaint; or','the amount of money you are being sued for']
-    assert blocks[2]['text'].startswith('The documents filed with the court')
-    assert blocks[3]['text']=='Many people check off ambiguity, since it is a broad defense.'
+    assert blocks[2]['text'].startswith('Ambiguity may also apply')
+    assert blocks[3]['text']=='Many people check off Ambiguity, since it is a broad defense.'
     assert blocks[4]['text']=='Do you want to check off Ambiguity?'
     assert any(b['type']=='list' for b in current.page()['help_blocks'])
 
@@ -53,7 +53,7 @@ def test_sol_preserves_its_deliberate_two_paragraph_general_explanation():
     blocks=current.page()['body_blocks']
     assert [b['type'] for b in blocks]==['paragraph','paragraph']
     assert blocks[0]['text'].endswith('Statute of limitations is a strong defense if it applies.')
-    assert blocks[1]['text'].startswith('Even if Example Harbor Bank sued within the time limit')
+    assert blocks[1]['text'].startswith('Consider raising this defense')
 
 
 def test_capacity_preserves_two_separate_lists():
