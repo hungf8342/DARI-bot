@@ -9,7 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from advocate_bot_qualtrics.practice_areas.consumer_debt.research_collection import (
-    DEFENSE_COLUMNS, RESPONSE_COLUMNS, SESSION_COLUMNS,
+    DEFENSE_COLUMNS, RESPONSE_COLUMNS, SESSION_COLUMNS, ResearchCollection,
 )
 from test_clickthrough_workflow import (
     LACHES_SUMMARY, answers, both_defenses_history, completed_history, intake, laches_history,
@@ -37,6 +37,28 @@ def context(sid):
     return dict(session_id=sid, event_id=str(uuid4()),
                 displayed_at='2026-11-03T10:00:00-08:00', checked_at='2026-11-03T10:00:01-08:00',
                 ended_at='2026-11-03T10:00:02-08:00')
+
+
+def test_source_version_transition_preserves_historical_sessions(tmp_path, monkeypatch):
+    original = ResearchCollection(tmp_path)
+    old_id = uuid4()
+    original.start(old_id)
+    historical = rows(tmp_path, 'sessions.csv')[0]
+    read_bytes = Path.read_bytes
+
+    def changed_source(path):
+        content = read_bytes(path)
+        return content + b'\n# source revision\n' if path.name == 'base_tree.yaml' else content
+
+    monkeypatch.setattr(Path, 'read_bytes', changed_source)
+    updated = ResearchCollection(tmp_path)
+    assert updated.version != original.version
+    updated.start(old_id)
+    new_id = uuid4()
+    updated.start(new_id)
+    sessions = {row['SESSION.ID']: row for row in rows(tmp_path, 'sessions.csv')}
+    assert sessions[str(old_id)] == historical
+    assert sessions[str(new_id)]['SESSION.TREE.VERSION'] == updated.version
 
 
 def advance(client, sid, history, revision=None, value=None):

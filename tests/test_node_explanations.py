@@ -1,7 +1,5 @@
 """Node-approved help and explicit plaintiff-type categories."""
 
-from pathlib import Path
-
 import pytest
 from pydantic import ValidationError
 
@@ -10,15 +8,12 @@ from advocate_bot_qualtrics.core.tree_definition import TreeDefinition
 from advocate_bot_qualtrics.practice_areas.consumer_debt.base_tree import BASE_TREE_DEFINITION as TREE
 
 
-def test_plaintiff_explanation_points_to_a_real_image_and_no_text_validation():
+def test_plaintiff_explanation_and_no_text_validation():
     node = TREE.node("get_plaintiff_name")
     assert node.input.type == "text"
     assert node.validation is None
     assert node.explanation is not None
     assert "almost always in the top half of the page" in node.explanation.text
-    assert [image.path for image in node.explanation.images] == ["complaint-examples/plaintiff.png"]
-    project = Path(__file__).resolve().parents[1]
-    assert (project / node.explanation.images[0].path).is_file()
 
 
 def test_plaintiff_type_enum_covers_all_and_only_three_branches():

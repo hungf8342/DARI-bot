@@ -56,9 +56,6 @@ nodes:
       show_with_question: true
       text: The plaintiff is who is suing you for money. You can find the plaintiff name on the first
         page of the complaint, almost always in the top half of the page.
-      images:
-        - path: complaint-examples/plaintiff.png
-          alt: Example complaint with the plaintiff name highlighted
     idk_skip_branch_id: unknown
     branches:
       - id: 'yes'
@@ -94,9 +91,6 @@ nodes:
       show_with_question: false
       text: The plaintiff is who is suing you for money. You can find the plaintiff name on the first
         page of the complaint, almost always in the top half of the page.
-      images:
-        - path: complaint-examples/plaintiff.png
-          alt: Example complaint with the plaintiff name highlighted
     title: Plaintiff
   - id: verify_creditor_type
     kind: choice
